@@ -1,0 +1,31 @@
+SPHERE
+sphere1
+5
+[0,0,0]
+translate:[0,1,1]
+rotateX:[0,90,0]
+scale:[1,2,1]
+
+BOX
+box1
+[1,1,1]
+[-1,-1,-1]
+translate:[0,1,1]
+rotateX:[0,90,0]
+scale:[1,2,1]
+
+MESH
+mesh1
+//obj file path
+translate:[0,1,1]
+rotateX:[0,90,0]
+scale:[1,2,1]
+
+DIFFUSE
+material1
+[0.98, 0.98, 0]
+
+SPECULAR
+REFLECTIVE
+REFRACRIVE
+EMISSIVE
