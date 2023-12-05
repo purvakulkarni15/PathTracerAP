@@ -1,4 +1,5 @@
 #include "PathTracing.h"
+#include <algorithm>
 
 #define EPSILON 0.000001f
 
@@ -61,18 +62,26 @@ bool Triangle::intersectRay(Ray& ray)
 
 void UniformGrid::addUniformGrid(Triangle* dev_triangles, int st, int ed, glm::vec3 bounding_box[2])
 {
-    float x_width = bounding_box[1].x - bounding_box[0].x;
-    float y_width = bounding_box[1].y - bounding_box[0].y;
-    float z_width = bounding_box[1].z - bounding_box[0].z;
+  
+    Grid_CPU grid;
+    grid.nTriangles = 0;
+    grid.bounding_box[0] = bounding_box[0];
+    grid.bounding_box[1] = bounding_box[1];
+    grid.bounding_box[0].x -= 0.5;
+    grid.bounding_box[0].y -= 0.5;
+    grid.bounding_box[0].z -= 0.5;
+    grid.bounding_box[1].x += 0.5;
+    grid.bounding_box[1].y += 0.5;
+    grid.bounding_box[1].z += 0.5;
+
+    float x_width = grid.bounding_box[1].x - grid.bounding_box[0].x;
+    float y_width = grid.bounding_box[1].y - grid.bounding_box[0].y;
+    float z_width = grid.bounding_box[1].z - grid.bounding_box[0].z;
 
     float x_cell_width = x_width / GRID_X;
     float y_cell_width = y_width / GRID_Y;
     float z_cell_width = z_width / GRID_Z;
 
-    Grid_CPU grid;
-    grid.nTriangles = 0;
-    grid.bounding_box[0] = bounding_box[0];
-    grid.bounding_box[1] = bounding_box[1];
     grid.voxels.resize(GRID_X * GRID_Y * GRID_Z);
 
     for (int t = st; t <= ed; t++)
@@ -108,13 +117,14 @@ void UniformGrid::addUniformGrid(Triangle* dev_triangles, int st, int ed, glm::v
         int cell_z_st = floor(abs(bounding_box[0].z - min_z) / z_cell_width);
         int cell_z_ed = floor(abs(bounding_box[0].z - max_z) / z_cell_width);
 
-        for (int z = cell_z_st; z < cell_z_ed; z++)
+        for (int z = cell_z_st; z <= cell_z_ed; z++)
         {
-            for (int y = cell_y_st; y < cell_y_ed; y++)
+            for (int y = cell_y_st; y <= cell_y_ed; y++)
             {
-                for (int x = cell_x_st; x < cell_x_ed; x++)
+                for (int x = cell_x_st; x <= cell_x_ed; x++)
                 {
-                    grid.voxels[x + y * GRID_X + GRID_X * GRID_Y * z].triangle_indices.push_back(t);
+                    int index = x + y * GRID_X + GRID_X * GRID_Y * z;
+                    grid.voxels[index].triangle_indices.push_back(t);
                     grid.nTriangles++;
                 }
             }
@@ -126,53 +136,34 @@ void UniformGrid::addUniformGrid(Triangle* dev_triangles, int st, int ed, glm::v
 
 bool UniformGrid::intersectBoundingBox(Ray& ray, glm::vec3 bounding_box[2])
 {
-    float tmin = 0, tmax = 0;
-
     float inv_x_dir = 1 / ray.dir.x;
     float inv_y_dir = 1 / ray.dir.y;
     float inv_z_dir = 1 / ray.dir.z;
 
-    tmin = (bounding_box[0].x - ray.orig.x) * inv_x_dir;
-    tmax = (bounding_box[1].x - ray.orig.x) * inv_x_dir;
+    float t1 = (bounding_box[0].x - ray.orig.x) * inv_x_dir;
+    float t2 = (bounding_box[1].x - ray.orig.x) * inv_x_dir;
+    float t3 = (bounding_box[0].y - ray.orig.y) * inv_y_dir;
+    float t4 = (bounding_box[1].y - ray.orig.y) * inv_y_dir;
+    float t5 = (bounding_box[0].z - ray.orig.z) * inv_z_dir;
+    float t6 = (bounding_box[1].z - ray.orig.z) * inv_z_dir;
 
-    if (tmin > tmax) swap(tmin, tmax);
+    float tmin = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
+    float tmax = min(min(max(t1, t2), max(t3, t4)), max(t5, t6));
 
-    float tymin = 0, tymax = 0;
-
-    tymin = (bounding_box[0].y - ray.orig.y) * inv_y_dir;
-    tymax = (bounding_box[1].y - ray.orig.y) * inv_y_dir;
-
-    if (tymin > tymax) swap(tymin, tymax);
-
-    if ((tmin > tymax) || (tymin > tmax))
+    // if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
+    if (tmax < 0)
+    {
         return false;
+    }
 
-    if (tymin > tmin)
-        tmin = tymin;
-
-    if (tymax < tmax)
-        tmax = tymax;
-
-    float tzmin = 0, tzmax = 0;
-
-    tzmin = (bounding_box[0].z - ray.orig.z) * inv_z_dir;
-    tzmax = (bounding_box[1].z - ray.orig.z) * inv_z_dir;
-
-    if (tzmin > tzmax) swap(tzmin, tzmax);
-
-    if ((tmin > tzmax) || (tzmin > tmax))
+    // if tmin > tmax, ray doesn't intersect AABB
+    if (tmin > tmax)
+    {
         return false;
+    }
 
-    if (tzmin > tmin)
-        tmin = tzmin;
-
-    if (tzmax < tmax)
-        tmax = tzmax;
-
-    if (tmin > tmax) swap(tmin, tmax);
-
-    if (tmin > 0.0f) ray.t = tmin;
-
+    ray.t = tmin;
+    ray.color = glm::vec3(0, 0, 200);
     return true;
 }
 
@@ -194,6 +185,7 @@ bool UniformGrid::intersectGrid(Ray& ray, Grid_GPU& grid)
     int nVoxel = GRID_X * GRID_Y * GRID_Z;
     if (intersectBoundingBox(ray, grid.bounding_box))
     {
+        return true;
         glm::vec3 currPos = ray.orig + ray.dir * ray.t;
         float x_width = grid.bounding_box[1].x - grid.bounding_box[0].x;
         float y_width = grid.bounding_box[1].y - grid.bounding_box[0].y;
@@ -323,23 +315,29 @@ bool UniformGrid::intersectGrid(Ray& ray, Grid_GPU& grid)
 
 void Camera::generateRays()
 {
-    float world_x = 10;
-    float world_y = 8;
-    float world_z = 2;
-    glm::vec3 camera_orig = glm::vec3(0, 0, 0);
+    glm::vec3 camera_orig = glm::vec3(0, 0, 17);
     rays.resize(RESOLUTION_X * RESOLUTION_Y);
+
+    float world_x = -10;
+    float step_x = 20.0 / RESOLUTION_X;
+    float world_y = -8;
+    float step_y = 16.0 / RESOLUTION_Y;
+    float world_z = 15.0;
+
 
     for (int i = 0; i < RESOLUTION_X; i++)
     {
         for (int j = 0; j < RESOLUTION_Y; j++)
         {
             int index = i * RESOLUTION_Y + j;
-            glm::vec3 pix_pos = glm::vec3(world_x / RESOLUTION_X, world_y / RESOLUTION_Y, world_z);
+            glm::vec3 pix_pos = glm::vec3(world_x, world_y, world_z);
             Camera::rays[index].orig = camera_orig;
             Camera::rays[index].dir = glm::normalize(pix_pos - camera_orig);
             Camera::rays[index].t = std::numeric_limits<float>::max();
             Camera::rays[index].color = glm::vec3(200, 200, 200);
+            world_x += step_x;
         }
+        world_y += step_y;
     }
 }
 
@@ -394,6 +392,7 @@ void GPU::allocateMemoryForMeshes(vector<Scene::Mesh>& meshes)
 
 void GPU::allocateMemoryForGrids(vector<Grid_CPU>& grids)
 {
+    GPU::nGrid = grids.size();
     int nGrid = grids.size();
     int nVoxel = GRID_X * GRID_Y * GRID_Z;
 
@@ -411,6 +410,11 @@ void GPU::allocateMemoryForGrids(vector<Grid_CPU>& grids)
         dev_grids[i].end_index = v_index + nVoxel - 1;
 
         nTriangles += grids[i].nTriangles;
+        //dev_grids[i].bounding_box[0] = grids[i].bounding_box[0];
+        //dev_grids[i].bounding_box[1] = grids[i].bounding_box[1];
+
+        dev_grids[i].bounding_box[0] = glm::vec3(-10.0, -10.0, -10.0);
+        dev_grids[i].bounding_box[1] = glm::vec3(10.0, 10.0, 10.0);
 
         v_index += nVoxel;
     }
