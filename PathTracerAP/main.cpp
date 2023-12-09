@@ -14,7 +14,7 @@ int main()
 	camera->generateRays();
 
 	//Initialize Scene
-	string config = "stanford_dragon.obj";
+	string config = "Input data\\lucy.obj";
 	scene = new Scene(config);
 
 	//Initialize Renderer

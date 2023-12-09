@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-#define EPSILON 0.000001f
+#define EPSILON 0.1f
 
 void Renderer::renderImage()
 {
@@ -56,11 +56,14 @@ void Renderer::renderImage()
 
 void Renderer::addScene(Scene &scene)
 {
+    dev_models = GPUMemoryPool<Model>::getInstance();
+    dev_models->allocate(scene.models);
+
+    dev_meshes = GPUMemoryPool<Mesh>::getInstance();
+    dev_meshes->allocate(scene.meshes);
+
 	dev_vertexDataArr = GPUMemoryPool<VertexData>::getInstance();
 	dev_vertexDataArr->allocate(scene.vertexDataArr);
-
-	dev_meshes = GPUMemoryPool<Mesh>::getInstance();
-	dev_meshes->allocate(scene.meshes);
 
 	dev_triangles = GPUMemoryPool<Triangle>::getInstance();
 	dev_triangles->allocate(scene.triangles);
@@ -85,18 +88,25 @@ void Renderer::computeRaySceneIntersection()
 {
     for (int i = 0; i < dev_rays->size; i++)
     {
-        for (int j = 0; j < dev_grids->size; j++)
+        for (int j = 0; j < dev_models->size; j++)
         {
-            computeRayGridIntersection(dev_rays->pool[i], dev_grids->pool[j]);
+            dev_rays->pool[i].orig = glm::vec3(dev_models->pool[j].world_to_model * glm::vec4(dev_rays->pool[i].orig_b, 1.0f));
+            dev_rays->pool[i].end = glm::vec3(dev_models->pool[j].world_to_model * glm::vec4(dev_rays->pool[i].end_b, 1.0f));
+
+            int gridIndex = dev_meshes->pool[dev_models->pool[j].meshIndex].gridIndex;
+
+            computeRayGridIntersection(dev_rays->pool[i], dev_grids->pool[gridIndex]);
         }
     }
 }
 
 bool Renderer::computeRayBoundingBoxIntersection(Ray& ray, glm::vec3 bounding_box[2])
 {
-    float inv_x_dir = 1 / ray.dir.x;
-    float inv_y_dir = 1 / ray.dir.y;
-    float inv_z_dir = 1 / ray.dir.z;
+    glm::vec3 dir = glm::normalize(ray.end - ray.orig);
+
+    float inv_x_dir = 1 / dir.x;
+    float inv_y_dir = 1 / dir.y;
+    float inv_z_dir = 1 / dir.z;
 
     float t1 = (bounding_box[0].x - ray.orig.x) * inv_x_dir;
     float t2 = (bounding_box[1].x - ray.orig.x) * inv_x_dir;
@@ -121,45 +131,47 @@ bool Renderer::computeRayBoundingBoxIntersection(Ray& ray, glm::vec3 bounding_bo
     }
 
     ray.t = tmin;
-    ray.color = glm::vec3(200, 0, 200);
+    //ray.color = glm::vec3(200, 0, 200);
     return true;
 }
 
 bool Renderer::computeRayTriangleIntersection(Triangle tri, Ray& ray)
 {
-    glm::vec3 vert1 = dev_vertexDataArr->pool[tri.indices[0]].vertex;
-    glm::vec3 vert2 = dev_vertexDataArr->pool[tri.indices[1]].vertex;
-    glm::vec3 vert3 = dev_vertexDataArr->pool[tri.indices[2]].vertex;
+    VertexData vert1 = dev_vertexDataArr->pool[tri.indices[0]];
+    VertexData vert2 = dev_vertexDataArr->pool[tri.indices[1]];
+    VertexData vert3 = dev_vertexDataArr->pool[tri.indices[2]];
 
-    glm::vec3 edge1 = vert2 - vert1;
-    glm::vec3 edge2 = vert3 - vert1;
+    glm::vec3 edge1 = vert2.vertex - vert1.vertex;
+    glm::vec3 edge2 = vert3.vertex - vert1.vertex;
 
-    glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+    glm::vec3 normal = glm::normalize((vert1.normal + vert2.normal + vert3.normal)/3.0f);//glm::normalize(glm::cross(edge1, edge2));
 
-    glm::vec3 h = glm::cross(ray.dir, edge2);
+    glm::vec3 dir = glm::normalize(ray.end - ray.orig);
+
+    glm::vec3 h = glm::cross(dir, edge2);
     float a = glm::dot(edge1, h);
 
     if (a > -EPSILON && a < EPSILON)
         return false;
 
     float f = 1.0f / a;
-    glm::vec3 s = ray.orig - vert1;
+    glm::vec3 s = ray.orig - vert1.vertex;
     float u = f * glm::dot(s, h);
 
-    if (u < 0.0f || u > 1.0f)
+    if (u < -EPSILON || u > 1.0f + EPSILON)
         return false;
 
     glm::vec3 q = glm::cross(s, edge1);
-    float v = f * glm::dot(ray.dir, q);
+    float v = f * glm::dot(dir, q);
 
-    if (v < 0.0f || u + v > 1.0f)
+    if (v < -EPSILON || u + v > 1.0f + EPSILON)
         return false;
 
     float t = f * glm::dot(edge2, q);
     if (ray.t > t)
     {
         ray.t = t;
-        glm::vec3 intersection = t * ray.dir + ray.orig;
+        glm::vec3 intersection = t * dir + ray.orig;
         glm::vec3 light = glm::normalize(ray.orig - intersection);
         float c = std::max(glm::dot(light, normal), 0.0f);
         ray.color = c * glm::vec3(0, 250, 200);
@@ -181,11 +193,14 @@ bool Renderer::computeRayVoxelIntersection(Ray& ray, Range& voxel)
 
 bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid)
 {
+    glm::vec3 dir = glm::normalize(ray.end - ray.orig);
+
     int nVoxel = GRID_X * GRID_Y * GRID_Z;
     glm::vec3* bounding_box = dev_meshes->pool[grid.meshIndex].bounding_box;
+    
     if (computeRayBoundingBoxIntersection(ray, bounding_box))
     {
-        glm::vec3 currModelPos = ray.orig + ray.dir * ray.t;
+        glm::vec3 currModelPos = ray.orig + dir * ray.t;
 
         ray.t = std::numeric_limits<float>::max();
 
@@ -199,14 +214,17 @@ bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid)
 
         if ((currModelPos.x - bounding_box[0].x) < -EPSILON)
         {
+            ray.color = glm::vec3(0, 200, 0);
             return false;
         }
         if ((currModelPos.y - bounding_box[0].y) < -EPSILON)
         {
+            ray.color = glm::vec3(200, 0, 0);
             return false;
         }
         if ((currModelPos.z - bounding_box[0].z) < -EPSILON)
         {
+            ray.color = glm::vec3(0, 0, 200);
             return false;
         }
 
@@ -218,8 +236,13 @@ bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid)
         y_index = min(y_index, GRID_Y - 1);
         z_index = min(z_index, GRID_Z - 1);
 
-        glm::vec3 tMax = glm::vec3(99999.0f, 99999.0f, 99999.0f);
-        glm::vec3 delta = glm::vec3(99999.0f, 99999.0f, 99999.0f);
+        x_index = max(x_index, 0);
+        y_index = max(y_index, 0);
+        z_index = max(z_index, 0);
+
+        float fmax_val = std::numeric_limits<float>::max();
+        glm::vec3 tMax = glm::vec3(fmax_val, fmax_val, fmax_val);
+        glm::vec3 delta = glm::vec3(fmax_val, fmax_val, fmax_val);
 
         int step_x = 1, step_y = 1, step_z = 1;
         int out_x = GRID_X, out_y = GRID_Y, out_z = GRID_Z;
@@ -227,17 +250,17 @@ bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid)
         float nextPosX = bounding_box[0].x + (x_index + 1) * x_cell_width;
         float prevPosX = bounding_box[0].x + (x_index)*x_cell_width;
 
-        if (ray.dir.x > 0.0f)
+        if (dir.x > 0.0f)
         {
-            delta.x = x_cell_width / ray.dir.x;
-            tMax.x = (nextPosX - currModelPos.x) / ray.dir.x;
+            delta.x = x_cell_width / dir.x;
+            tMax.x = (nextPosX - currModelPos.x) / dir.x;
             step_x = 1;
             out_x = GRID_X;
         }
-        else if (ray.dir.x < 0.0f)
+        else if (dir.x < 0.0f)
         {
-            delta.x = -1.0f * x_cell_width / ray.dir.x;
-            tMax.x = (prevPosX - currModelPos.x) / ray.dir.x;
+            delta.x = -1.0f * x_cell_width / dir.x;
+            tMax.x = (prevPosX - currModelPos.x) / dir.x;
             step_x = -1;
             out_x = -1;
         }
@@ -245,17 +268,17 @@ bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid)
         float nextPosY = bounding_box[0].y + (y_index + 1) * y_cell_width;
         float prevPosY = bounding_box[0].y + (y_index)*y_cell_width;
 
-        if (ray.dir.y > 0.0f)
+        if (dir.y > 0.0f)
         {
-            delta.y = y_cell_width / ray.dir.y;
-            tMax.y = (nextPosY - currModelPos.y) / ray.dir.y;
+            delta.y = y_cell_width / dir.y;
+            tMax.y = (nextPosY - currModelPos.y) / dir.y;
             step_y = 1;
             out_y = GRID_Y;
         }
-        else if (ray.dir.y < 0.0f)
+        else if (dir.y < 0.0f)
         {
-            delta.y = -1.0f * y_cell_width / ray.dir.y;
-            tMax.y = (prevPosY - currModelPos.y) / ray.dir.y;
+            delta.y = -1.0f * y_cell_width / dir.y;
+            tMax.y = (prevPosY - currModelPos.y) / dir.y;
             step_y = -1;
             out_y = -1;
         }
@@ -263,17 +286,17 @@ bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid)
         float nextPosZ = bounding_box[0].z + (z_index + 1) * z_cell_width;
         float prevPosZ = bounding_box[0].z + (z_index)*z_cell_width;
 
-        if (ray.dir.z > 0.0f)
+        if (dir.z > 0.0f)
         {
-            delta.z = z_cell_width / ray.dir.z;
-            tMax.z = (nextPosZ - currModelPos.z) / ray.dir.z;
+            delta.z = z_cell_width / dir.z;
+            tMax.z = (nextPosZ - currModelPos.z) / dir.z;
             step_z = 1;
             out_z = GRID_Z;
         }
-        else if (ray.dir.z < 0.0f)
+        else if (dir.z < 0.0f)
         {
-            delta.z = -1.0f * z_cell_width / ray.dir.z;
-            tMax.z = (prevPosZ - currModelPos.z) / ray.dir.z;
+            delta.z = -1.0f * z_cell_width / dir.z;
+            tMax.z = (prevPosZ - currModelPos.z) / dir.z;
             step_z = -1;
             out_z = -1;
         }

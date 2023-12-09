@@ -14,7 +14,9 @@ using namespace std;
 struct Ray
 {
 	glm::vec3 orig;
-	glm::vec3 dir;
+	glm::vec3 end;
+	glm::vec3 orig_b;
+	glm::vec3 end_b;
 	glm::vec3 color;
 	glm::vec3 hitNormal;
 	float t;
@@ -29,5 +31,4 @@ public:
 	vector<glm::vec3> image;
 	
 	void generateRays();
-	void generateImage();
 };

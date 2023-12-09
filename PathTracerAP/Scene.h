@@ -27,6 +27,7 @@ class Scene
 public:
 	Scene(string config);
 
+	vector<Model> models;
 	vector<Mesh> meshes;
 	vector<VertexData> vertexDataArr;
 	vector<Triangle> triangles;
