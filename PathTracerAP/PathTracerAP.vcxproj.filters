@@ -24,9 +24,6 @@
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Scene.h">
@@ -35,14 +32,19 @@
     <ClInclude Include="Primitive.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GPUMemoryPool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer.h">
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Renderer.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
+    </CudaCompile>
+    <CudaCompile Include="GPUMemoryPool.h">
+      <Filter>Header Files</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

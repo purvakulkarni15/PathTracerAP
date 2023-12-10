@@ -1,10 +1,12 @@
 #include "Renderer.h"
 
 #define EPSILON 0.1f
+#define FLOAT_MAX 999999.0f
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 void Renderer::renderImage()
 {
-    computeRaySceneIntersection();
     char bmpHeader[] = {
         'B', 'M',                   // Signature
         0, 0, 0, 0,                  // File size (placeholder)
@@ -38,7 +40,7 @@ void Renderer::renderImage()
     for (int y = 0; y < RESOLUTION_Y; ++y) {
         for (int x = 0; x < RESOLUTION_X; ++x)
         {
-            char pixel[] = { dev_rays->pool[x + y * RESOLUTION_X].color.x, dev_rays->pool[x + y * RESOLUTION_X].color.y, dev_rays->pool[x + y * RESOLUTION_X].color.z };
+            char pixel[] = { render_data.dev_ray_data->pool[x + y * RESOLUTION_X].color.x,  render_data.dev_ray_data->pool[x + y * RESOLUTION_X].color.y, render_data.dev_ray_data->pool[x + y * RESOLUTION_X].color.z };
             outFile.write(pixel, sizeof(pixel));
         }
     }
@@ -56,65 +58,48 @@ void Renderer::renderImage()
 
 void Renderer::addScene(Scene &scene)
 {
-    dev_models = GPUMemoryPool<Model>::getInstance();
-    dev_models->allocate(scene.models);
+    render_data.dev_model_data = GPUMemoryPool<Model>::getInstance();
+    render_data.dev_model_data->allocate(scene.models);
 
-    dev_meshes = GPUMemoryPool<Mesh>::getInstance();
-    dev_meshes->allocate(scene.meshes);
+    render_data.dev_mesh_data = GPUMemoryPool<Mesh>::getInstance();
+    render_data.dev_mesh_data->allocate(scene.meshes);
 
-	dev_vertexDataArr = GPUMemoryPool<VertexData>::getInstance();
-	dev_vertexDataArr->allocate(scene.vertex_data_pool);
+    render_data.dev_per_vertex_data= GPUMemoryPool<VertexData>::getInstance();
+    render_data.dev_per_vertex_data->allocate(scene.vertex_data_pool);
 
-	dev_triangles = GPUMemoryPool<Triangle>::getInstance();
-	dev_triangles->allocate(scene.triangles);
+    render_data.dev_triangle_data = GPUMemoryPool<Triangle>::getInstance();
+    render_data.dev_triangle_data->allocate(scene.triangles);
 
-    dev_grids = GPUMemoryPool<Grid>::getInstance();
-    dev_grids->allocate(scene.grids);
+    render_data.dev_grid_data = GPUMemoryPool<Grid>::getInstance();
+    render_data.dev_grid_data->allocate(scene.grids);
 
-    dev_voxels = GPUMemoryPool<Range>::getInstance();
-    dev_voxels->allocate(scene.voxels);
+    render_data.dev_voxel_data = GPUMemoryPool<Range>::getInstance();
+    render_data.dev_voxel_data->allocate(scene.voxels);
 
-    dev_perVoxelDataPool = GPUMemoryPool<int>::getInstance();
-    dev_perVoxelDataPool->allocate(scene.per_voxel_data_pool);
+    render_data.dev_per_voxel_data = GPUMemoryPool<int>::getInstance();
+    render_data.dev_per_voxel_data->allocate(scene.per_voxel_data_pool);
 }
 
 void Renderer::addRays(vector<Ray> rays)
 {
-    dev_rays = GPUMemoryPool<Ray>::getInstance();
-    dev_rays->allocate(rays);
+    render_data.dev_ray_data = GPUMemoryPool<Ray>::getInstance();
+    render_data.dev_ray_data->allocate(rays);
 }
 
-void Renderer::computeRaySceneIntersection()
+__host__ __device__ bool computeRayBoundingBoxIntersection(Ray* ray, glm::vec3 bounding_box[2])
 {
-    for (int i = 0; i < dev_rays->size; i++)
-    {
-        for (int j = 0; j < dev_models->size; j++)
-        {
-            dev_rays->pool[i].orig_transformed = glm::vec3(dev_models->pool[j].world_to_model * glm::vec4(dev_rays->pool[i].orig, 1.0f));
-            dev_rays->pool[i].end_transformed = glm::vec3(dev_models->pool[j].world_to_model * glm::vec4(dev_rays->pool[i].end, 1.0f));
-
-            int grid_index = dev_models->pool[j].grid_index;
-            RenderData render_data;
-            render_data.mat = dev_models->pool[j].mat;
-            computeRayGridIntersection(dev_rays->pool[i], dev_grids->pool[grid_index], render_data);
-        }
-    }
-}
-
-bool Renderer::computeRayBoundingBoxIntersection(Ray& ray, glm::vec3 bounding_box[2])
-{
-    glm::vec3 dir = glm::normalize(ray.end_transformed - ray.orig_transformed);
+    glm::vec3 dir = glm::normalize(ray->end_transformed - ray->orig_transformed);
 
     float inv_x_dir = 1 / dir.x;
     float inv_y_dir = 1 / dir.y;
     float inv_z_dir = 1 / dir.z;
 
-    float t1 = (bounding_box[0].x - ray.orig_transformed.x) * inv_x_dir;
-    float t2 = (bounding_box[1].x - ray.orig_transformed.x) * inv_x_dir;
-    float t3 = (bounding_box[0].y - ray.orig_transformed.y) * inv_y_dir;
-    float t4 = (bounding_box[1].y - ray.orig_transformed.y) * inv_y_dir;
-    float t5 = (bounding_box[0].z - ray.orig_transformed.z) * inv_z_dir;
-    float t6 = (bounding_box[1].z - ray.orig_transformed.z) * inv_z_dir;
+    float t1 = (bounding_box[0].x - ray->orig_transformed.x) * inv_x_dir;
+    float t2 = (bounding_box[1].x - ray->orig_transformed.x) * inv_x_dir;
+    float t3 = (bounding_box[0].y - ray->orig_transformed.y) * inv_y_dir;
+    float t4 = (bounding_box[1].y - ray->orig_transformed.y) * inv_y_dir;
+    float t5 = (bounding_box[0].z - ray->orig_transformed.z) * inv_z_dir;
+    float t6 = (bounding_box[1].z - ray->orig_transformed.z) * inv_z_dir;
 
     float tmin = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
     float tmax = min(min(max(t1, t2), max(t3, t4)), max(t5, t6));
@@ -131,22 +116,25 @@ bool Renderer::computeRayBoundingBoxIntersection(Ray& ray, glm::vec3 bounding_bo
         return false;
     }
 
-    ray.t = tmin;
+    ray->t = tmin;
     return true;
 }
 
-bool Renderer::computeRayTriangleIntersection(Triangle tri, Ray& ray, RenderData& render_data)
+__host__ __device__ bool computeRayTriangleIntersection(RenderData render_data, int iray, int itriangle, int imodel)
 {
-    VertexData vert1 = dev_vertexDataArr->pool[tri.indices[0]];
-    VertexData vert2 = dev_vertexDataArr->pool[tri.indices[1]];
-    VertexData vert3 = dev_vertexDataArr->pool[tri.indices[2]];
+    Ray* ray = &render_data.dev_ray_data->pool[iray];
+    Triangle triangle = render_data.dev_triangle_data->pool[itriangle];
+
+    VertexData vert1 = render_data.dev_per_vertex_data->pool[triangle.indices[0]];
+    VertexData vert2 = render_data.dev_per_vertex_data->pool[triangle.indices[1]];
+    VertexData vert3 = render_data.dev_per_vertex_data->pool[triangle.indices[2]];
 
     glm::vec3 edge1 = vert2.vertex - vert1.vertex;
     glm::vec3 edge2 = vert3.vertex - vert1.vertex;
 
-    glm::vec3 normal = glm::normalize((vert1.normal + vert2.normal + vert3.normal)/3.0f);//glm::normalize(glm::cross(edge1, edge2));
+    glm::vec3 normal = glm::normalize((vert1.normal + vert2.normal + vert3.normal) / 3.0f);//glm::normalize(glm::cross(edge1, edge2));
 
-    glm::vec3 dir = glm::normalize(ray.end_transformed - ray.orig_transformed);
+    glm::vec3 dir = glm::normalize(ray->end_transformed - ray->orig_transformed);
 
     glm::vec3 h = glm::cross(dir, edge2);
     float a = glm::dot(edge1, h);
@@ -155,7 +143,7 @@ bool Renderer::computeRayTriangleIntersection(Triangle tri, Ray& ray, RenderData
         return false;
 
     float f = 1.0f / a;
-    glm::vec3 s = ray.orig_transformed - vert1.vertex;
+    glm::vec3 s = ray->orig_transformed - vert1.vertex;
     float u = f * glm::dot(s, h);
 
     if (u < -EPSILON || u > 1.0f + EPSILON)
@@ -168,41 +156,50 @@ bool Renderer::computeRayTriangleIntersection(Triangle tri, Ray& ray, RenderData
         return false;
 
     float t = f * glm::dot(edge2, q);
-    if (ray.t > t)
+    if (ray->t > t)
     {
-        ray.t = t;
-        glm::vec3 intersection = t * dir + ray.orig_transformed;
-        glm::vec3 light = glm::normalize(ray.orig_transformed - intersection);
-        float c = std::max(glm::dot(light, normal), 0.0f);
-        ray.color = c * render_data.mat.color;
+        ray->t = t;
+        glm::vec3 intersection = t * dir + ray->orig_transformed;
+        glm::vec3 light = glm::normalize(ray->orig_transformed - intersection);
+        float c = MAX(glm::dot(light, normal), 0.0f);
+        ray->hit_normal = normal;
+        ray->color = c*render_data.dev_model_data->pool[imodel].mat.color;
     }
     return t > EPSILON;
 }
 
-bool Renderer::computeRayVoxelIntersection(Ray& ray, Range& voxel, RenderData& render_data)
+__host__ __device__ bool computeRayVoxelIntersection(RenderData render_data, int iray, int ivoxel, int imodel)
 {
+    Ray* ray = &render_data.dev_ray_data->pool[iray];
+    Range* voxel = &render_data.dev_voxel_data->pool[ivoxel];
+
     bool isIntersect = false;
 
-    for (int i = voxel.start_index; i < voxel.end_index; i++)
+    for (int i = voxel->start_index; i < voxel->end_index; i++)
     {
-        Triangle tri = dev_triangles->pool[dev_perVoxelDataPool->pool[i]];
-        if (computeRayTriangleIntersection(tri, ray, render_data)) isIntersect = true;
+        int itriangle = render_data.dev_per_voxel_data->pool[i];
+        
+        if (computeRayTriangleIntersection(render_data, iray, itriangle, imodel)) isIntersect = true;
     }
     return isIntersect;
 }
 
-bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid, RenderData& render_data)
-{
-    glm::vec3 dir = glm::normalize(ray.end_transformed - ray.orig_transformed);
 
+
+__host__ __device__ bool computeRayGridIntersection(RenderData render_data, int iray, int imodel)
+{
+    Ray* ray = &render_data.dev_ray_data->pool[iray];
+    glm::vec3 dir = glm::normalize(ray->end_transformed - ray->orig_transformed);
+
+    int igrid = render_data.dev_model_data->pool[imodel].grid_index;
+    Grid* grid = &render_data.dev_grid_data->pool[igrid];
     int nVoxel = GRID_X * GRID_Y * GRID_Z;
-    glm::vec3* bounding_box = dev_meshes->pool[grid.mesh_index].bounding_box;
-    
+    glm::vec3* bounding_box = render_data.dev_mesh_data->pool[grid->mesh_index].bounding_box;
+
     if (computeRayBoundingBoxIntersection(ray, bounding_box))
     {
-        glm::vec3 currModelPos = ray.orig_transformed + dir * ray.t;
-
-        ray.t = std::numeric_limits<float>::max();
+        glm::vec3 currModelPos = ray->orig_transformed + dir * ray->t;
+        ray->t = FLOAT_MAX;//std::numeric_limits<float>::max();
 
         float x_width = bounding_box[1].x - bounding_box[0].x;
         float y_width = bounding_box[1].y - bounding_box[0].y;
@@ -214,17 +211,14 @@ bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid, RenderData& rend
 
         if ((currModelPos.x - bounding_box[0].x) < -EPSILON)
         {
-            ray.color = glm::vec3(0, 200, 0);
             return false;
         }
         if ((currModelPos.y - bounding_box[0].y) < -EPSILON)
         {
-            ray.color = glm::vec3(200, 0, 0);
             return false;
         }
         if ((currModelPos.z - bounding_box[0].z) < -EPSILON)
         {
-            ray.color = glm::vec3(0, 0, 200);
             return false;
         }
 
@@ -232,13 +226,13 @@ bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid, RenderData& rend
         int y_index = glm::floor((currModelPos.y - bounding_box[0].y) / y_cell_width);
         int z_index = glm::floor((currModelPos.z - bounding_box[0].z) / z_cell_width);
 
-        x_index = min(x_index, GRID_X - 1);
-        y_index = min(y_index, GRID_Y - 1);
-        z_index = min(z_index, GRID_Z - 1);
+        x_index = MIN(x_index, GRID_X - 1);
+        y_index = MIN(y_index, GRID_Y - 1);
+        z_index = MIN(z_index, GRID_Z - 1);
 
-        x_index = max(x_index, 0);
-        y_index = max(y_index, 0);
-        z_index = max(z_index, 0);
+        x_index = MAX(x_index, 0);
+        y_index = MAX(y_index, 0);
+        z_index = MAX(z_index, 0);
 
         float fmax_val = std::numeric_limits<float>::max();
         glm::vec3 tMax = glm::vec3(fmax_val, fmax_val, fmax_val);
@@ -303,8 +297,8 @@ bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid, RenderData& rend
 
         while (1)
         {
-            int index = x_index + y_index * GRID_X + z_index * GRID_X * GRID_Y;
-            if (computeRayVoxelIntersection(ray, dev_voxels->pool[index], render_data))
+            int ivoxel = x_index + y_index * GRID_X + z_index * GRID_X * GRID_Y;
+            if (computeRayVoxelIntersection(render_data, iray, ivoxel, imodel))
             {
                 return true;
             }
@@ -338,4 +332,51 @@ bool Renderer::computeRayGridIntersection(Ray& ray, Grid& grid, RenderData& rend
             }
         }
     }
+}
+
+__global__ void computeRaySceneIntersection_kernel(RenderData render_data)
+{
+    int iray = threadIdx.x + blockDim.x * blockIdx.x;
+
+    if (iray >= render_data.dev_ray_data->size) return;
+
+    Ray* ray = &render_data.dev_ray_data->pool[iray];
+
+    for (int imodel = 0; imodel < render_data.dev_model_data->size; imodel++)
+    {
+        Model* model = &render_data.dev_model_data->pool[imodel];
+
+        ray->orig_transformed = glm::vec3(model->world_to_model * glm::vec4(ray->orig, 1.0f));
+        ray->end_transformed = glm::vec3(model->world_to_model * glm::vec4(ray->end, 1.0f));
+
+        computeRayGridIntersection(render_data, iray, imodel);
+    }
+}
+
+void computeRaySceneIntersection(RenderData render_data)
+{
+    for (int iray = 0; iray < render_data.dev_ray_data->size; iray++)
+    {
+        Ray* ray = &render_data.dev_ray_data->pool[iray];
+        for (int imodel = 0; imodel < render_data.dev_model_data->size; imodel++)
+        {
+            Model* model = &render_data.dev_model_data->pool[imodel];
+
+            ray->orig_transformed = glm::vec3(model->world_to_model * glm::vec4(ray->orig, 1.0f));
+            ray->end_transformed = glm::vec3(model->world_to_model * glm::vec4(ray->end, 1.0f));
+
+            computeRayGridIntersection(render_data, iray, imodel);
+        }
+    }
+}
+
+void Renderer::renderLoop()
+{
+    dim3 threads(32);
+    dim3 blocks = (ceil(render_data.dev_ray_data->size/32));
+
+    computeRaySceneIntersection_kernel << <blocks, threads>> > (render_data);
+    cudaError_t err = cudaDeviceSynchronize();
+
+    //computeRaySceneIntersection(render_data);
 }

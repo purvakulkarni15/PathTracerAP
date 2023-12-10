@@ -21,5 +21,6 @@ int main()
 	renderer = new Renderer();
 	renderer->addScene(*scene);
 	renderer->addRays(camera->rays);
+	renderer->renderLoop();
 	renderer->renderImage();
 }

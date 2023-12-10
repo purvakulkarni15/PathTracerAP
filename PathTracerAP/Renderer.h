@@ -1,4 +1,11 @@
 #pragma once
+#define GLM_FORCE_CUDA
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include "device_launch_parameters.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "Camera.h"
 #include "Scene.h"
 #include "Primitive.h"
@@ -6,30 +13,24 @@
 
 struct RenderData
 {
-	Material mat;
+	GPUMemoryPool<Model> *dev_model_data;
+	GPUMemoryPool<Mesh> *dev_mesh_data;
+	GPUMemoryPool<VertexData> *dev_per_vertex_data;
+	GPUMemoryPool<Triangle> *dev_triangle_data;
+	GPUMemoryPool<Grid> *dev_grid_data;
+	GPUMemoryPool<Range> *dev_voxel_data;
+	GPUMemoryPool<int> *dev_per_voxel_data;
+	GPUMemoryPool <Ray> *dev_ray_data;
 };
 
 class Renderer
 {
 public:
-	void addScene(Scene &scene);
-	void addRays(vector<Ray> rays);
-
-	void renderImage();
+	__host__ void addScene(Scene &scene);
+	__host__ void addRays(vector<Ray> rays);
+	__host__ void renderLoop();
+	__host__ void renderImage();
 	
 private:
-	bool computeRayGridIntersection(Ray& ray, Grid& grid, RenderData& render_data);
-	bool computeRayTriangleIntersection(Triangle tri, Ray& ray, RenderData& render_data);
-	bool computeRayVoxelIntersection(Ray& ray, Range& voxel, RenderData &render_data);
-	bool computeRayBoundingBoxIntersection(Ray& ray, glm::vec3 bounding_box[2]);
-	void computeRaySceneIntersection();
-
-	GPUMemoryPool<Model>* dev_models;
-	GPUMemoryPool<Mesh>* dev_meshes;
-	GPUMemoryPool<VertexData>* dev_vertexDataArr;
-	GPUMemoryPool<Triangle>* dev_triangles;
-	GPUMemoryPool<Grid>* dev_grids;
-	GPUMemoryPool<Range>* dev_voxels;
-	GPUMemoryPool<int>* dev_perVoxelDataPool;
-	GPUMemoryPool <Ray>* dev_rays;
+	RenderData render_data;
 };

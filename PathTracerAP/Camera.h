@@ -1,4 +1,6 @@
 #pragma once
+#define GLM_FORCE_CUDA
+
 #include <iostream>
 #include <vector>
 #include <glm/glm.hpp>
@@ -18,7 +20,7 @@ struct Ray
 	glm::vec3 orig;
 	glm::vec3 end;
 	glm::vec3 color;
-	glm::vec3 hitNormal;
+	glm::vec3 hit_normal;
 	float t;
 	Material::MaterialType mat;
 };

@@ -1,6 +1,9 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include "device_launch_parameters.h"
 
 using namespace std;
 
@@ -13,7 +16,7 @@ public:
 	{
 		if (instance == nullptr)
 		{
-			instance = new GPUMemoryPool();
+			cudaMallocManaged(&instance, sizeof(GPUMemoryPool<T>));//new GPUMemoryPool();
 		}
 		return instance;
 	}
@@ -22,10 +25,12 @@ public:
 		if (instance)
 		{
 			size = data.size();
-			pool = (T*)malloc(sizeof(T) * size);
+			cudaError_t err = cudaMallocManaged(&pool, sizeof(T)*size);
+			//pool = (T*)malloc(sizeof(T) * size);
 
 			const T* pData = data.data();
-			std::copy(pData, pData + size, pool);
+			//std::copy(pData, pData + size, pool);
+			err = cudaMemcpy(pool, pData, sizeof(T) * size, cudaMemcpyHostToDevice);
 		}
 	}
 	void free()
