@@ -4,6 +4,11 @@
 #include "Primitive.h"
 #include "GPUMemoryPool.h"
 
+struct RenderData
+{
+	Material mat;
+};
+
 class Renderer
 {
 public:
@@ -13,9 +18,9 @@ public:
 	void renderImage();
 	
 private:
-	bool computeRayGridIntersection(Ray& ray, Grid& grid);
-	bool computeRayTriangleIntersection(Triangle tri, Ray& ray);
-	bool computeRayVoxelIntersection(Ray& ray, Range& voxel);
+	bool computeRayGridIntersection(Ray& ray, Grid& grid, RenderData& render_data);
+	bool computeRayTriangleIntersection(Triangle tri, Ray& ray, RenderData& render_data);
+	bool computeRayVoxelIntersection(Ray& ray, Range& voxel, RenderData &render_data);
 	bool computeRayBoundingBoxIntersection(Ray& ray, glm::vec3 bounding_box[2]);
 	void computeRaySceneIntersection();
 

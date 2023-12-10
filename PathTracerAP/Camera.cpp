@@ -20,8 +20,8 @@ void Camera::generateRays()
             int index = y * RESOLUTION_X + x;
             glm::vec3 pix_pos = glm::vec3(world_x, world_y, world_z);
 
-            Camera::rays[index].orig_b = camera_orig;
-            Camera::rays[index].end_b = pix_pos;
+            Camera::rays[index].orig = camera_orig;
+            Camera::rays[index].end = pix_pos;
             Camera::rays[index].t = std::numeric_limits<float>::max();
             Camera::rays[index].color = glm::vec3(200, 200, 200);
             world_x += step_x;

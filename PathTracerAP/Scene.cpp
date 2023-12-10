@@ -11,7 +11,8 @@ Scene::Scene(string config)
     
     glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
     glm::mat4 rotateMatrix = glm::rotate(glm::mat4(1.0f), 180.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    model.meshIndex = meshes.size()-1;
+    model.mesh_index = meshes.size()-1;
+    model.mat.color = glm::vec3(250.0f, 0.0f, 0.0f);
     model.model_to_world = rotateMatrix * scaleMatrix;
     model.world_to_model = glm::inverse(model.model_to_world);
 
@@ -21,20 +22,20 @@ Scene::Scene(string config)
 
     scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
     rotateMatrix = glm::rotate(glm::mat4(1.0f), 45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    model1.meshIndex = meshes.size() - 1;
+    model1.mesh_index = meshes.size() - 1;
     model1.model_to_world = rotateMatrix * scaleMatrix;
     model1.world_to_model = glm::inverse(model1.model_to_world);
-
+    model1.mat.color = glm::vec3(0.0f, 250.0f, 0.0f);
     models.push_back(model1);
 
     Model model2;
 
     scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
     rotateMatrix = glm::rotate(glm::mat4(1.0f), -45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    model2.meshIndex = meshes.size() - 1;
+    model2.mesh_index = meshes.size() - 1;
     model2.model_to_world = rotateMatrix * scaleMatrix;
     model2.world_to_model = glm::inverse(model2.model_to_world);
-
+    model2.mat.color = glm::vec3(0.0f, 0.0f, 250.0f);
     models.push_back(model2);
 
     /*Mesh mesh1;
@@ -45,7 +46,7 @@ Scene::Scene(string config)
     addMesh("Input data\\stanford_bunny.obj", mesh1);
     meshes.push_back(mesh1);*/
 
-    createGrids();
+    generateUniformGrids();
 }
 
 void Scene::addMesh(string path, Mesh& mesh)
@@ -107,17 +108,17 @@ glm::vec3 getFromVector3D(const aiVector3D &vector3D)
 
 void Scene::processMesh(aiMesh* ai_mesh, Mesh& mesh, const aiScene* scene)
 {
-    mesh.vertexDataIndices.start_index = vertexDataArr.size();
+    mesh.vertexDataIndices.start_index = vertex_data_pool.size();
     for (unsigned int i = 0; i < ai_mesh->mNumVertices; ++i)
     {
-        VertexData vertexDataObj;
-        vertexDataObj.vertex = getFromVector3D(ai_mesh->mVertices[i]);
-        vertexDataObj.normal = getFromVector3D(ai_mesh->mNormals[i]);
-        vertexDataArr.push_back(vertexDataObj);
+        VertexData vertex_data_obj;
+        vertex_data_obj.vertex = getFromVector3D(ai_mesh->mVertices[i]);
+        vertex_data_obj.normal = getFromVector3D(ai_mesh->mNormals[i]);
+        vertex_data_pool.push_back(vertex_data_obj);
 
-        updateBoundingBox(mesh.bounding_box, vertexDataObj.vertex);
+        updateBoundingBox(mesh.bounding_box, vertex_data_obj.vertex);
     }
-    mesh.vertexDataIndices.end_index = vertexDataArr.size();
+    mesh.vertexDataIndices.end_index = vertex_data_pool.size();
 
     mesh.triangleDataIndices.start_index = triangles.size();
     for (unsigned int i = 0; i < ai_mesh->mNumFaces; ++i)
@@ -182,33 +183,47 @@ void getVoxelIndex( int& x_index_st, int& x_index_ed,
     z_index_st = max(z_index_st, 0);
 }
 
-void Scene::createGrids()
+void Scene::generateUniformGrids()
 {
-    for (int i = 0; i < meshes.size(); i++)
-    {
-        Grid grid;
-        grid.meshIndex = i;
-        vector<vector<int>> voxels_buffer(GRID_X * GRID_Y * GRID_Z);
-        int triangle_size = 0;
+    vector<bool> is_mesh_processed(meshes.size(), false);
+    vector<bool> grid_index_cache(meshes.size());
 
-        float x_width = meshes[i].bounding_box[1].x - meshes[i].bounding_box[0].x;
-        float y_width = meshes[i].bounding_box[1].y - meshes[i].bounding_box[0].y;
-        float z_width = meshes[i].bounding_box[1].z - meshes[i].bounding_box[0].z;
+    for (int i = 0; i < models.size(); i++)
+    {
+        if (is_mesh_processed[models[i].mesh_index])
+        {
+            models[i].grid_index = grid_index_cache[models[i].mesh_index];
+            continue;
+        }
+
+        is_mesh_processed[models[i].mesh_index] = true;
+        grid_index_cache[models[i].mesh_index] = grids.size();
+        models[i].grid_index = grids.size();
+
+        Grid grid;
+        
+        grid.mesh_index = models[i].mesh_index;
+        
+        vector<vector<int>> voxels_buffer(GRID_X * GRID_Y * GRID_Z);
+
+        float x_width = meshes[grid.mesh_index].bounding_box[1].x - meshes[grid.mesh_index].bounding_box[0].x;
+        float y_width = meshes[grid.mesh_index].bounding_box[1].y - meshes[grid.mesh_index].bounding_box[0].y;
+        float z_width = meshes[grid.mesh_index].bounding_box[1].z - meshes[grid.mesh_index].bounding_box[0].z;
 
         float x_voxel_width = x_width / GRID_X;
         float y_voxel_width = y_width / GRID_Y;
         float z_voxel_width = z_width / GRID_Z;
 
-        for (int t = meshes[i].triangleDataIndices.start_index; t < meshes[i].triangleDataIndices.end_index; t++)
+        for (int t = meshes[grid.mesh_index].triangleDataIndices.start_index; t < meshes[grid.mesh_index].triangleDataIndices.end_index; t++)
         {
             int t0_index = triangles[t].indices[0];
             int t1_index = triangles[t].indices[1];
             int t2_index = triangles[t].indices[2];
 
             glm::vec3 triangle[3];
-            triangle[0] = vertexDataArr[t0_index].vertex;
-            triangle[1] = vertexDataArr[t1_index].vertex;
-            triangle[2] = vertexDataArr[t2_index].vertex;
+            triangle[0] = vertex_data_pool[t0_index].vertex;
+            triangle[1] = vertex_data_pool[t1_index].vertex;
+            triangle[2] = vertex_data_pool[t2_index].vertex;
 
             int x_index_st;
             int x_index_ed;
@@ -218,7 +233,7 @@ void Scene::createGrids()
             int z_index_ed;
 
             getVoxelIndex(  x_index_st, x_index_ed, y_index_st, y_index_ed, z_index_st, z_index_ed, 
-                            meshes[i].bounding_box[0],
+                            meshes[grid.mesh_index].bounding_box[0],
                             x_width, y_width, z_width,
                             x_voxel_width, y_voxel_width, z_voxel_width,
                             triangle);
@@ -231,7 +246,6 @@ void Scene::createGrids()
                     {
                         int index = x + y * GRID_X + GRID_X * GRID_Y * z;
                         voxels_buffer[index].push_back(t);
-                        triangle_size++;
                     }
                 }
             }
@@ -241,17 +255,16 @@ void Scene::createGrids()
         for (int i = 0; i < voxels_buffer.size(); i++)
         {
             Range range;
-            range.start_index = perVoxelDataPool.size();
+            range.start_index = per_voxel_data_pool.size();
             for (int j = 0; j < voxels_buffer[i].size(); j++)
             {
-                perVoxelDataPool.push_back(voxels_buffer[i][j]);
+                per_voxel_data_pool.push_back(voxels_buffer[i][j]);
             }       
-            range.end_index = perVoxelDataPool.size();
+            range.end_index = per_voxel_data_pool.size();
             voxels.push_back(range);
         }
         grid.voxelIndices.end_index = voxels.size();
 
         grids.push_back(grid);
-        meshes[i].gridIndex = grids.size()-1;
     }
 }

@@ -19,7 +19,16 @@ using namespace std;
 struct Grid
 {
 	Range voxelIndices;
-	int meshIndex;
+	int mesh_index;
+};
+
+struct Model
+{
+	int grid_index;
+	int mesh_index;
+	glm::mat4 model_to_world;
+	glm::mat4 world_to_model;
+	Material mat;
 };
 
 class Scene
@@ -29,15 +38,15 @@ public:
 
 	vector<Model> models;
 	vector<Mesh> meshes;
-	vector<VertexData> vertexDataArr;
+	vector<VertexData> vertex_data_pool;
 	vector<Triangle> triangles;
 	vector<Grid> grids;
 	vector<Range> voxels;
-	vector<int> perVoxelDataPool;
+	vector<int> per_voxel_data_pool;
 
 private:
 	void addMesh(string path, Mesh& mesh);
-	void createGrids();
+	void generateUniformGrids();
 	void processMesh(aiMesh* ai_mesh, Mesh& mesh, const aiScene* scene);
 	void processNode(aiNode* node, Mesh& mesh, const aiScene* scene);
 };

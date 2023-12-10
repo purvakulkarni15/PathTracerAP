@@ -41,13 +41,4 @@ struct Mesh
 	Range vertexDataIndices;
 	Range triangleDataIndices;
 	glm::vec3 bounding_box[2];
-	int gridIndex;
-};
-
-struct Model
-{
-	int meshIndex;
-	glm::mat4 model_to_world;
-	glm::mat4 world_to_model;
-	Material mat;
 };
