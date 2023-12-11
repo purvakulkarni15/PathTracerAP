@@ -234,9 +234,8 @@ __host__ __device__ bool computeRayGridIntersection(RenderData render_data, int 
         y_index = MAX(y_index, 0);
         z_index = MAX(z_index, 0);
 
-        float fmax_val = std::numeric_limits<float>::max();
-        glm::vec3 tMax = glm::vec3(fmax_val, fmax_val, fmax_val);
-        glm::vec3 delta = glm::vec3(fmax_val, fmax_val, fmax_val);
+        glm::vec3 tMax = glm::vec3(FLOAT_MAX, FLOAT_MAX, FLOAT_MAX);
+        glm::vec3 delta = glm::vec3(FLOAT_MAX, FLOAT_MAX, FLOAT_MAX);
 
         int step_x = 1, step_y = 1, step_z = 1;
         int out_x = GRID_X, out_y = GRID_Y, out_z = GRID_Z;
@@ -297,7 +296,7 @@ __host__ __device__ bool computeRayGridIntersection(RenderData render_data, int 
 
         while (1)
         {
-            int ivoxel = x_index + y_index * GRID_X + z_index * GRID_X * GRID_Y;
+            int ivoxel = grid->voxelIndices.start_index + x_index + y_index * GRID_X + z_index * GRID_X * GRID_Y;
             if (computeRayVoxelIntersection(render_data, iray, ivoxel, imodel))
             {
                 return true;
@@ -360,12 +359,15 @@ void computeRaySceneIntersection(RenderData render_data)
         Ray* ray = &render_data.dev_ray_data->pool[iray];
         for (int imodel = 0; imodel < render_data.dev_model_data->size; imodel++)
         {
-            Model* model = &render_data.dev_model_data->pool[imodel];
+            //if (imodel == 1)
+            {
+                Model* model = &render_data.dev_model_data->pool[imodel];
 
-            ray->orig_transformed = glm::vec3(model->world_to_model * glm::vec4(ray->orig, 1.0f));
-            ray->end_transformed = glm::vec3(model->world_to_model * glm::vec4(ray->end, 1.0f));
+                ray->orig_transformed = glm::vec3(model->world_to_model * glm::vec4(ray->orig, 1.0f));
+                ray->end_transformed = glm::vec3(model->world_to_model * glm::vec4(ray->end, 1.0f));
 
-            computeRayGridIntersection(render_data, iray, imodel);
+                computeRayGridIntersection(render_data, iray, imodel);
+            }
         }
     }
 }
@@ -375,8 +377,8 @@ void Renderer::renderLoop()
     dim3 threads(32);
     dim3 blocks = (ceil(render_data.dev_ray_data->size/32));
 
-    computeRaySceneIntersection_kernel << <blocks, threads>> > (render_data);
-    cudaError_t err = cudaDeviceSynchronize();
+    //computeRaySceneIntersection_kernel << <blocks, threads>> > (render_data);
+    //cudaError_t err = cudaDeviceSynchronize();
 
-    //computeRaySceneIntersection(render_data);
+    computeRaySceneIntersection(render_data);
 }

@@ -3,48 +3,37 @@
 Scene::Scene(string config)
 {
 
-    Mesh mesh;
-    addMesh("Input data\\stanford_dragon.obj", mesh);
-    meshes.push_back(mesh);
+    Mesh bunny_mesh;
+    addMesh("Input data\\bunny.obj", bunny_mesh);
+    meshes.push_back(bunny_mesh);
 
-    Model model;
-    
-    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
-    glm::mat4 rotateMatrix = glm::rotate(glm::mat4(1.0f), 180.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    model.mesh_index = meshes.size()-1;
-    model.mat.color = glm::vec3(250.0f, 0.0f, 0.0f);
-    model.model_to_world = rotateMatrix * scaleMatrix;
-    model.world_to_model = glm::inverse(model.model_to_world);
+    Mesh armadillo_mesh;
+    addMesh("Input data\\armadillo.obj", armadillo_mesh);
+    meshes.push_back(armadillo_mesh);
 
-    models.push_back(model);
+    glm::mat4 scale_matrix, rotate_matrix, translation_matrix;
 
-    Model model1;
+    Model bunny_model;
 
-    scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
-    rotateMatrix = glm::rotate(glm::mat4(1.0f), 45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    model1.mesh_index = meshes.size() - 1;
-    model1.model_to_world = rotateMatrix * scaleMatrix;
-    model1.world_to_model = glm::inverse(model1.model_to_world);
-    model1.mat.color = glm::vec3(0.0f, 250.0f, 0.0f);
-    models.push_back(model1);
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.05, 0.05, 0.05));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(135.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-100.0, 0, 0));
+    bunny_model.mesh_index = 0;
+    bunny_model.model_to_world = rotate_matrix * scale_matrix;
+    bunny_model.world_to_model = glm::inverse(bunny_model.model_to_world);
+    bunny_model.mat.color = glm::vec3(0.0f, 250.0f, 0.0f);
+    models.push_back(bunny_model);
 
-    Model model2;
+    Model armadillo_model;
 
-    scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
-    rotateMatrix = glm::rotate(glm::mat4(1.0f), -45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    model2.mesh_index = meshes.size() - 1;
-    model2.model_to_world = rotateMatrix * scaleMatrix;
-    model2.world_to_model = glm::inverse(model2.model_to_world);
-    model2.mat.color = glm::vec3(0.0f, 0.0f, 250.0f);
-    models.push_back(model2);
-
-    /*Mesh mesh1;
-    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    glm::mat4 rotateMatrix = glm::rotate(glm::mat4(1.0f), 180.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    mesh1.model_to_world = rotateMatrix * scaleMatrix;
-    mesh1.world_to_model = glm::inverse(mesh1.model_to_world);
-    addMesh("Input data\\stanford_bunny.obj", mesh1);
-    meshes.push_back(mesh1);*/
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-100.0, 0, 0));
+    armadillo_model.mesh_index = 1;
+    armadillo_model.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
+    armadillo_model.world_to_model = glm::inverse(armadillo_model.model_to_world);
+    armadillo_model.mat.color = glm::vec3(0.0f, 0.0f, 250.0f);
+    models.push_back(armadillo_model);
 
     generateUniformGrids();
 }

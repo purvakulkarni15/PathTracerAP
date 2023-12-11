@@ -2,14 +2,14 @@
 
 void Camera::generateRays()
 {
-    glm::vec3 camera_orig = glm::vec3(0, 0, 55.0);
+    glm::vec3 camera_orig = glm::vec3(0, 0, 205.0);
     rays.resize(RESOLUTION_X * RESOLUTION_Y);
 
     float world_x = -10.0;
     float step_x = 20.0 / RESOLUTION_X;
-    float world_y = -8;
+    float world_y = -4;
     float step_y = 16.0 / RESOLUTION_Y;
-    float world_z = 50.0;
+    float world_z = 200.0;
 
 
     for (int y = 0; y < RESOLUTION_Y; ++y)
