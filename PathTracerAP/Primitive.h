@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Config.h"
+
 struct VertexData
 {
 	glm::vec3 vertex;
@@ -15,6 +17,7 @@ struct VertexData
 struct Triangle
 {
 	int indices[3];
+	bool is_rendered = false;
 };
 
 struct Range
@@ -37,9 +40,36 @@ struct Material
 	glm::vec3 color;
 };
 
+struct Bounding_Box
+{
+	glm::vec3 min, max;
+	Bounding_Box()
+	{
+		//Initialize bounding box
+		min.x = FLOAT_MAX;
+		min.y = FLOAT_MAX;
+		min.z = FLOAT_MAX;
+
+		max.x = FLOAT_MIN;
+		max.y = FLOAT_MIN;
+		max.z = FLOAT_MIN;
+	}
+
+	void update(glm::vec3 vertex)
+	{
+		min.x = min.x > vertex.x ? vertex.x : min.x;
+		min.y = min.y > vertex.y ? vertex.y : min.y;
+		min.z = min.z > vertex.z ? vertex.z : min.z;
+
+		max.x = max.x < vertex.x ? vertex.x : max.x;
+		max.y = max.y < vertex.y ? vertex.y : max.y;
+		max.z = max.z < vertex.z ? vertex.z : max.z;
+	}
+};
+
 struct Mesh
 {
 	Range vertexDataIndices;
 	Range triangleDataIndices;
-	glm::vec3 bounding_box[2];
+	Bounding_Box bounding_box;
 };

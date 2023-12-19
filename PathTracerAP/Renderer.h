@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Primitive.h"
+#include "Config.h"
 #include "GPUMemoryPool.h"
 
 struct RenderData
@@ -21,6 +22,14 @@ struct RenderData
 	GPUMemoryPool<Range> *dev_voxel_data;
 	GPUMemoryPool<int> *dev_per_voxel_data;
 	GPUMemoryPool <Ray> *dev_ray_data;
+
+#ifdef ENABLE_VISUALIZER
+	struct VisualizerData
+	{
+		vector<Model> models;
+		vector<int> rays;
+	}visualizer_data;
+#endif
 };
 
 class Renderer
@@ -30,7 +39,6 @@ public:
 	__host__ void addRays(vector<Ray> rays);
 	__host__ void renderLoop();
 	__host__ void renderImage();
-	
-private:
+
 	RenderData render_data;
 };

@@ -6,23 +6,33 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Config.h"
 #include "Primitive.h"
 
 using namespace std;
 
-#define RESOLUTION_X 500
-#define RESOLUTION_Y 400
-
 struct Ray
 {
-	glm::vec3 orig_transformed;
-	glm::vec3 end_transformed;
-	glm::vec3 orig;
-	glm::vec3 end;
-	glm::vec3 color;
-	glm::vec3 hit_normal;
-	float t;
-	Material::MaterialType mat;
+	struct Points
+	{
+		glm::vec3 orig;
+		glm::vec3 end;
+	} points_base, points_transformed;
+
+	struct HitInfo
+	{
+		float t;
+		glm::vec3 impact_normal;
+		Material mat;
+		glm::vec3 color;
+	} hit_info;
+
+#ifdef ENABLE_VISUALIZER
+	struct VisualizerData
+	{
+		vector<int> hit_voxels;
+	} visualizer_data;
+#endif
 };
 
 class Camera

@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #define GLM_FORCE_CUDA
 #include <glm/glm.hpp>
@@ -13,9 +14,12 @@
 
 using namespace std;
 
-#define GRID_X 50
-#define GRID_Y 50
-#define GRID_Z 50
+struct Voxel3D 
+{
+	int x; 
+	int y;  
+	int z; 
+};
 
 struct Grid
 {

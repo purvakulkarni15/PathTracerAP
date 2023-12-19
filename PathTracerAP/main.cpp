@@ -1,13 +1,16 @@
 #include "Scene.h"
 #include "Renderer.h"
 #include "Camera.h"
+#ifdef ENABLE_VISUALIZER
+#include "Debug_Visualizer.h"
+#endif
+
 
 Scene* scene;
 Renderer* renderer;
 Camera* camera;
 
-int main()
-{
+int main(){
 	//Initialize camera
 	camera = new Camera();
 	//Generate rays
@@ -23,4 +26,9 @@ int main()
 	renderer->addRays(camera->rays);
 	renderer->renderLoop();
 	renderer->renderImage();
+
+#ifdef ENABLE_VISUALIZER
+	launch_visualizer(&(renderer->render_data));
+#endif
+
 }
