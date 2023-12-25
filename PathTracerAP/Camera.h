@@ -11,6 +11,11 @@
 
 using namespace std;
 
+struct Pixel
+{
+	glm::vec3 color;
+};
+
 struct Ray
 {
 	struct Points
@@ -23,16 +28,16 @@ struct Ray
 	{
 		float t;
 		glm::vec3 impact_normal;
-		Material mat;
-		glm::vec3 color;
+		Material impact_mat;
 	} hit_info;
 
-#ifdef ENABLE_VISUALIZER
-	struct VisualizerData
+	struct MetaData
 	{
-		vector<int> hit_voxels;
-	} visualizer_data;
-#endif
+		int ipixel;
+		int remainingBounces;
+	}meta_data;
+
+	glm::vec3 color;
 };
 
 class Camera

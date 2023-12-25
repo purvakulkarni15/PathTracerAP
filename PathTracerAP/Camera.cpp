@@ -23,7 +23,7 @@ void Camera::generateRays()
             Camera::rays[index].points_base.orig = camera_orig;
             Camera::rays[index].points_base.end = pix_pos;
             Camera::rays[index].hit_info.t = FLOAT_MAX;
-            Camera::rays[index].hit_info.color = glm::vec3(200, 200, 200);
+            Camera::rays[index].color = glm::vec3(200, 200, 200);
             world_x += step_x;
         }
         world_y += step_y;

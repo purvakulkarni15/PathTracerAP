@@ -12,53 +12,89 @@ Scene::Scene(string config)
     meshes.push_back(armadillo_mesh);
 
     Mesh box;
-    addMesh("Input data\\box.obj", box);
-    //meshes.push_back(box);
+    addMesh("Input data\\enclosing_box.obj", box);
+    meshes.push_back(box);
+
+    Mesh dragon_mesh;
+    addMesh("Input data\\stanford_dinosaur.obj", dragon_mesh);
+    meshes.push_back(dragon_mesh);
+
+    Mesh ceiling_light;
+    addMesh("Input data\\ceiling_light.obj", ceiling_light);
+    meshes.push_back(ceiling_light);
 
     glm::mat4 scale_matrix, rotate_matrix, translation_matrix;
 
     Model bunny_model;
 
-    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.04f, 0.04f, 0.04f));
-    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(100.0f, -70.0f, 650.0f));
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.08f, 0.08f, 0.08f));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(25.0f, -120.0f, 100.0f));
     bunny_model.mesh_index = 0;
     bunny_model.model_to_world = translation_matrix *rotate_matrix* scale_matrix;
     bunny_model.world_to_model = glm::inverse(bunny_model.model_to_world);
-    bunny_model.mat.color = glm::vec3(0.0f, 250.0f, 0.0f);
+    bunny_model.mat.color = glm::vec3(0.001f, 0.99f, 0.2f);
+    bunny_model.mat.material_type = Material::MaterialType::DIFFUSE;
     models.push_back(bunny_model);
 
     Model bunny_model_2;
-    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.04f, 0.04f, 0.04f));
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.08f, 0.08f, 0.08f));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-75.0f, -120.0f, 0.0f));
     bunny_model_2.mesh_index = 0;
     bunny_model_2.model_to_world = translation_matrix *rotate_matrix* scale_matrix;
     bunny_model_2.world_to_model = glm::inverse(bunny_model_2.model_to_world);
-    bunny_model_2.mat.color = glm::vec3(250.0f, 250.0f, 0.0f);
+    bunny_model_2.mat.color = glm::vec3(0.99f, 0.99f, 0.001f);
+    bunny_model_2.mat.material_type = Material::MaterialType::DIFFUSE;
     models.push_back(bunny_model_2);
 
     Model armadillo_model;
 
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
-    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(225.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-250.0f, 5.0f, 0.0f));
     armadillo_model.mesh_index = 1;
     armadillo_model.model_to_world = translation_matrix *rotate_matrix* scale_matrix;
     armadillo_model.world_to_model = glm::inverse(armadillo_model.model_to_world);
-    armadillo_model.mat.color = glm::vec3(0.0f, 0.0f, 250.0f);
+    armadillo_model.mat.color = glm::vec3(0.001f, 0.001f, 0.99f);
+    armadillo_model.mat.material_type = Material::MaterialType::DIFFUSE;
     models.push_back(armadillo_model);
 
-    /*Model box_model;
+    Model box_model;
 
-    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.5, 0.5, 0.1));
-    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-100.0f, -150.0f, 300.0f));
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -120.0f, 0.0f));
     box_model.mesh_index = 2;
     box_model.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
     box_model.world_to_model = glm::inverse(box_model.model_to_world);
-    box_model.mat.color = glm::vec3(150.0f, 150.0f, 50.0f);
-    models.push_back(box_model);*/
+    box_model.mat.color = glm::vec3(0.99f, 0.99f, 0.99f);
+    box_model.mat.material_type = Material::MaterialType::DIFFUSE;
+    models.push_back(box_model);
+
+    Model dragon_model;
+
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(225.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(200.0f, 25.0f, 0.0f));
+    dragon_model.mesh_index = 3;
+    dragon_model.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
+    dragon_model.world_to_model = glm::inverse(dragon_model.model_to_world);
+    dragon_model.mat.color = glm::vec3(0.001f, 0.5f, 0.99f);
+    dragon_model.mat.material_type = Material::MaterialType::EMISSIVE;
+    //models.push_back(dragon_model);
+
+    Model light_model;
+
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 750.0f, 0.0f));
+    light_model.mesh_index = 4;
+    light_model.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
+    light_model.world_to_model = glm::inverse(light_model.model_to_world);
+    light_model.mat.color = glm::vec3(0.99f, 0.99f, 0.99f);
+    light_model.mat.material_type = Material::MaterialType::EMISSIVE;
+    models.push_back(light_model);
 
     generateUniformGrids();
 }
@@ -228,7 +264,9 @@ void Scene::generateUniformGrids()
             range.start_index = per_voxel_data_pool.size();
             for (int j = 0; j < voxels_buffer[i].size(); j++)
             {
-                per_voxel_data_pool.push_back(voxels_buffer[i][j]);
+                TriangleIndex iTriangle;
+                iTriangle.index = voxels_buffer[i][j];
+                per_voxel_data_pool.push_back(iTriangle);
             }       
             range.end_index = per_voxel_data_pool.size();
             voxels.push_back(range);

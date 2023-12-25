@@ -20,6 +20,11 @@ struct Triangle
 	bool is_rendered = false;
 };
 
+struct TriangleIndex
+{
+	int index;
+};
+
 struct Range
 {
 	int start_index;
@@ -32,7 +37,8 @@ struct Material
 		DIFFUSE,
 		SPECULAR,
 		REFLECTIVE,
-		REFRACTIVE
+		REFRACTIVE,
+		EMISSIVE
 	} material_type;
 
 	float refractive_index;

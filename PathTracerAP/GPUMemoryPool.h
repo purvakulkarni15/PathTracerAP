@@ -16,7 +16,6 @@ public:
 	{
 		if (instance == nullptr)
 		{
-			//instance = new GPUMemoryPool();
 			cudaMallocManaged(&instance, sizeof(GPUMemoryPool<T>));
 		}
 		return instance;

@@ -20,14 +20,17 @@ struct RenderData
 	GPUMemoryPool<Triangle> *dev_triangle_data;
 	GPUMemoryPool<Grid> *dev_grid_data;
 	GPUMemoryPool<Range> *dev_voxel_data;
-	GPUMemoryPool<int> *dev_per_voxel_data;
+	GPUMemoryPool<TriangleIndex> *dev_per_voxel_data;
 	GPUMemoryPool <Ray> *dev_ray_data;
+	GPUMemoryPool <Pixel>* dev_image_data;
+	GPUMemoryPool <int>* dev_stencil;
 
 #ifdef ENABLE_VISUALIZER
 	struct VisualizerData
 	{
 		vector<Model> models;
 		vector<int> rays;
+		vector<vector<int>> hit_voxels_per_ray;
 	}visualizer_data;
 #endif
 };
@@ -39,6 +42,7 @@ public:
 	__host__ void addRays(vector<Ray> rays);
 	__host__ void renderLoop();
 	__host__ void renderImage();
+	__host__ void free();
 
 	RenderData render_data;
 };

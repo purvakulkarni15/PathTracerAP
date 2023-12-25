@@ -47,7 +47,7 @@ public:
 	vector<Triangle> triangles;
 	vector<Grid> grids;
 	vector<Range> voxels;
-	vector<int> per_voxel_data_pool;
+	vector<TriangleIndex> per_voxel_data_pool;
 
 private:
 	void addMesh(string path, Mesh& mesh);
