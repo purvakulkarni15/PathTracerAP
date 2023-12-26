@@ -121,14 +121,18 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\hp\source\repos\PathTracerAP\PathTracerAP\external\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>D:\assimp-master\assimp-master\build\lib\Debug\assimp-vc142-mtd.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\lib\x64\cudart_static.lib;C:\Users\hp\source\repos\PathTracerAP\PathTracerAP\external\lib\glew32.lib;C:\Users\hp\source\repos\PathTracerAP\PathTracerAP\external\lib\glfw3.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\lib\x64\cudart.lib;opengl32.lib;glu32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D:\assimp-master\assimp-master\build\lib\Debug\assimp-vc142-mtd.lib;C:\Users\hp\source\repos\PathTracerAP\PathTracerAP\external\lib\glew32.lib;C:\Users\hp\source\repos\PathTracerAP\PathTracerAP\external\lib\glfw3.lib;opengl32.lib;glu32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <CodeGeneration>compute_86,sm_86</CodeGeneration>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <Runtime>MDd</Runtime>
+      <AdditionalOptions>-v </AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -148,7 +152,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -156,11 +159,15 @@
     <ClCompile Include="Scene.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
+    <ClInclude Include="utility.h" />
     <CudaCompile Include="GPUMemoryPool.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="Primitive.h" />
     <CudaCompile Include="Renderer.h" />
     <ClInclude Include="Scene.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="backup.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

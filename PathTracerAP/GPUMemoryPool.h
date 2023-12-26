@@ -16,7 +16,7 @@ public:
 	{
 		if (instance == nullptr)
 		{
-			cudaMallocManaged(&instance, sizeof(GPUMemoryPool<T>));
+			cudaError_t err = cudaMallocManaged(&instance, sizeof(GPUMemoryPool<T>));
 		}
 		return instance;
 	}
@@ -26,17 +26,15 @@ public:
 		{
 			size = data.size();
 			cudaError_t err = cudaMallocManaged(&pool, sizeof(T)*size);
-			//pool = (T*)malloc(sizeof(T) * size);
 
 			const T* pData = data.data();
-			//std::copy(pData, pData + size, pool);
 			err = cudaMemcpy(pool, pData, sizeof(T) * size, cudaMemcpyHostToDevice);
 		}
 	}
 	void free()
 	{
-		delete pool;
-		if (instance) delete instance;
+		cudaFree(pool);
+		if (instance) cudaFree(instance);
 	}
 
 	int size;

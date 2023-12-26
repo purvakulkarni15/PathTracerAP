@@ -7,6 +7,41 @@
 
 #include "Config.h"
 
+namespace Camera
+{
+	struct Pixel
+	{
+		glm::vec3 color;
+	};
+
+
+	struct Ray
+	{
+		struct Points
+		{
+			glm::vec3 orig;
+			glm::vec3 end;
+		} points_base, points_transformed;
+
+		struct HitInfo
+		{
+			float t;
+			glm::vec3 impact_normal;
+			Material impact_mat;
+		} hit_info;
+
+		struct MetaData
+		{
+			int ipixel;
+			int remainingBounces;
+		}meta_data;
+
+		glm::vec3 color;
+	};
+}
+
+
+
 struct VertexData
 {
 	glm::vec3 vertex;
@@ -17,10 +52,14 @@ struct VertexData
 struct Triangle
 {
 	int indices[3];
-	bool is_rendered = false;
 };
 
 struct TriangleIndex
+{
+	int index;
+};
+
+struct VoxelIndex
 {
 	int index;
 };

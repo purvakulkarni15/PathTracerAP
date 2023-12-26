@@ -1,0 +1,63 @@
+
+/*void computeRaySceneIntersection(RenderData render_data)
+{
+    for (int iray = 0; iray < render_data.dev_ray_data->size; iray++)
+    {
+        Ray* ray = &render_data.dev_ray_data->pool[iray];
+        for (int imodel = 0; imodel < render_data.dev_model_data->size; imodel++)
+        {
+            if (iray != (220 + (RESOLUTION_Y - 450 - 1) * RESOLUTION_X)) continue;
+            Model* model = &render_data.dev_model_data->pool[imodel];
+
+            ray->points_transformed.orig = glm::vec3(model->world_to_model * glm::vec4(ray->points_base.orig, 1.0f));
+            ray->points_transformed.end = glm::vec3(model->world_to_model * glm::vec4(ray->points_base.end, 1.0f));
+
+            computeRayGridIntersection(render_data, iray, imodel);
+            #ifdef ENABLE_VISUALIZER
+                render_data.visualizer_data.rays.push_back(iray);
+            #endif
+           
+        }
+    }
+}*/
+
+
+
+/*void shadeRay(int iter, RenderData render_data)
+{
+    for (int iray = 0; iray < render_data.dev_ray_data->size; iray++)
+    {
+        Ray* ray = &render_data.dev_ray_data->pool[iray];
+
+        if (ray->hit_info.t < FLOAT_MAX)
+        {
+            glm::vec3 dir = glm::normalize(ray->points_base.end - ray->points_base.orig);
+            glm::vec3 intersection_pt = ray->points_base.orig + dir * ray->hit_info.t;
+
+            if (ray->meta_data.remainingBounces > 0)
+            {
+                if (ray->hit_info.impact_mat.material_type == Material::MaterialType::DIFFUSE)
+                {
+                    ray->color *= ray->hit_info.impact_mat.color;
+                    thrust::default_random_engine rng = makeSeededRandomEngine(iter, iray, 0);
+                    glm::vec3 scattered_ray_dir = calculateRandomDirectionInHemisphere(ray->hit_info.impact_normal, rng);
+                    ray->points_base.orig = intersection_pt + 0.5f * ray->hit_info.impact_normal;
+                    ray->points_base.end = ray->points_base.orig + scattered_ray_dir * 10.0f;
+                }
+                else if (ray->hit_info.impact_mat.material_type == Material::MaterialType::EMISSIVE)
+                {
+                    ray->color *= ray->hit_info.impact_mat.color;
+                    ray->meta_data.remainingBounces = 0;
+                }
+            }
+            ray->hit_info.t = FLOAT_MAX;
+        }
+        else
+        {
+            ray->meta_data.remainingBounces = 0;
+            ray->color *= glm::vec3(0.001f, 0.001f, 0.001f);
+            ray->hit_info.t = FLOAT_MAX;
+        }
+        ray->meta_data.remainingBounces--;
+    }
+}*/

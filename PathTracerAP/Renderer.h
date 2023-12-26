@@ -6,7 +6,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Camera.h"
 #include "Scene.h"
 #include "Primitive.h"
 #include "Config.h"
@@ -38,8 +37,7 @@ struct RenderData
 class Renderer
 {
 public:
-	__host__ void addScene(Scene &scene);
-	__host__ void addRays(vector<Ray> rays);
+	__host__ void allocateOnGPU(Scene &scene);
 	__host__ void renderLoop();
 	__host__ void renderImage();
 	__host__ void free();
