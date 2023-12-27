@@ -4,23 +4,23 @@ Scene::Scene(string config)
 {
 
     Mesh bunny_mesh;
-    addMesh("Input data\\stanford_bunny.obj", bunny_mesh);
+    loadAndProcessMeshFile("Input data\\stanford_bunny.obj", bunny_mesh);
     meshes.push_back(bunny_mesh);
 
     Mesh armadillo_mesh;
-    addMesh("Input data\\stanford_armadillo.obj", armadillo_mesh);
+    loadAndProcessMeshFile("Input data\\stanford_armadillo.obj", armadillo_mesh);
     meshes.push_back(armadillo_mesh);
 
     Mesh box;
-    addMesh("Input data\\enclosing_box.obj", box);
+    loadAndProcessMeshFile("Input data\\enclosing_box.obj", box);
     meshes.push_back(box);
 
     Mesh dragon_mesh;
-    addMesh("Input data\\stanford_dinosaur.obj", dragon_mesh);
+    loadAndProcessMeshFile("Input data\\stanford_dinosaur.obj", dragon_mesh);
     meshes.push_back(dragon_mesh);
 
     Mesh ceiling_light;
-    addMesh("Input data\\ceiling_light.obj", ceiling_light);
+    loadAndProcessMeshFile("Input data\\ceiling_light.obj", ceiling_light);
     meshes.push_back(ceiling_light);
 
     glm::mat4 scale_matrix, rotate_matrix, translation_matrix;
@@ -158,7 +158,7 @@ Scene::Scene(string config)
     generateUniformGrids();
 }
 
-void Scene::addMesh(string path, Mesh& mesh)
+void Scene::loadAndProcessMeshFile(string path, Mesh& mesh)
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path, aiProcess_FlipUVs);
@@ -170,7 +170,6 @@ void Scene::addMesh(string path, Mesh& mesh)
     }
 
     processNode(scene->mRootNode, mesh, scene);
-
 }
 
 void Scene::processNode(aiNode* node, Mesh& mesh, const aiScene* scene)
@@ -199,18 +198,18 @@ glm::vec3 convertFromVector3D(const aiVector3D &vector3D)
 
 void Scene::processMesh(aiMesh* ai_mesh, Mesh& mesh, const aiScene* scene)
 {
-    mesh.vertexDataIndices.start_index = vertex_data_pool.size();
+    mesh.vertex_indices.start_index = vertices.size();
     for (unsigned int i = 0; i < ai_mesh->mNumVertices; ++i)
     {
-        VertexData vertex_data_obj;
-        vertex_data_obj.vertex = convertFromVector3D(ai_mesh->mVertices[i]);
+        Vertex vertex_data_obj;
+        vertex_data_obj.position = convertFromVector3D(ai_mesh->mVertices[i]);
         //vertex_data_obj.normal = getFromVector3D(ai_mesh->mNormals[i]);
-        vertex_data_pool.push_back(vertex_data_obj);
-        mesh.bounding_box.update(vertex_data_obj.vertex);
+        vertices.push_back(vertex_data_obj);
+        mesh.bounding_box.update(vertex_data_obj.position);
     }
-    mesh.vertexDataIndices.end_index = vertex_data_pool.size();
+    mesh.vertex_indices.end_index = vertices.size();
 
-    mesh.triangleDataIndices.start_index = triangles.size();
+    mesh.triangle_indices.start_index = triangles.size();
     for (unsigned int i = 0; i < ai_mesh->mNumFaces; ++i)
     {
         aiFace face = ai_mesh->mFaces[i];
@@ -219,31 +218,28 @@ void Scene::processMesh(aiMesh* ai_mesh, Mesh& mesh, const aiScene* scene)
         Triangle tri;
         for (unsigned int j = 0; j < 3; ++j)
         {
-            tri.indices[j] = mesh.vertexDataIndices.start_index + face.mIndices[j];
+            tri.vertex_indices[j] = mesh.vertex_indices.start_index + face.mIndices[j];
         }
         triangles.push_back(tri);
     }
-    mesh.triangleDataIndices.end_index = triangles.size();
+    mesh.triangle_indices.end_index = triangles.size();
 }
 
-void getVoxelIndex( Voxel3D& min, Voxel3D& max, 
-                    Bounding_Box& bounding_box,
-                    const float& x_voxel_width, const float& y_voxel_width, const float& z_voxel_width,
-                    const glm::vec3* triangle)
+void computeVoxelIndex( Voxel3DIndex& min, Voxel3DIndex& max, BoundingBox& bounding_box, const Grid::VoxelWidth &voxel_width, const glm::vec3* triangle)
 {
-    Bounding_Box t_box;
+    BoundingBox t_box;
     t_box.update(triangle[0]);
     t_box.update(triangle[1]);
     t_box.update(triangle[2]);
 
-    min.x = floor(abs(bounding_box.min.x - t_box.min.x) / x_voxel_width);
-    max.x = floor(abs(bounding_box.min.x - t_box.max.x) / x_voxel_width);
+    min.x = floor(abs(bounding_box.min.x - t_box.min.x) / voxel_width.x);
+    max.x = floor(abs(bounding_box.min.x - t_box.max.x) / voxel_width.x);
 
-    min.y = floor(abs(bounding_box.min.y - t_box.min.y) / y_voxel_width);
-    max.y = floor(abs(bounding_box.min.y - t_box.max.y) / y_voxel_width);
+    min.y = floor(abs(bounding_box.min.y - t_box.min.y) / voxel_width.y);
+    max.y = floor(abs(bounding_box.min.y - t_box.max.y) / voxel_width.y);
 
-    min.z = floor(abs(bounding_box.min.z - t_box.min.z) / z_voxel_width);
-    max.z = floor(abs(bounding_box.min.z - t_box.max.z) / z_voxel_width);
+    min.z = floor(abs(bounding_box.min.z - t_box.min.z) / voxel_width.z);
+    max.z = floor(abs(bounding_box.min.z - t_box.max.z) / voxel_width.z);
 
     min.x = CLAMP(min.x, 0, GRID_X - 1);
     min.y = CLAMP(min.y, 0, GRID_Y - 1);
@@ -281,27 +277,24 @@ void Scene::generateUniformGrids()
         float y_width = meshes[grid.mesh_index].bounding_box.max.y - meshes[grid.mesh_index].bounding_box.min.y;
         float z_width = meshes[grid.mesh_index].bounding_box.max.z - meshes[grid.mesh_index].bounding_box.min.z;
 
-        float x_voxel_width = x_width / GRID_X;
-        float y_voxel_width = y_width / GRID_Y;
-        float z_voxel_width = z_width / GRID_Z;
+        grid.voxel_width.x = x_width / GRID_X;
+        grid.voxel_width.y = y_width / GRID_Y;
+        grid.voxel_width.z = z_width / GRID_Z;
 
-        for (int t = meshes[grid.mesh_index].triangleDataIndices.start_index; t < meshes[grid.mesh_index].triangleDataIndices.end_index; t++)
+        for (int t = meshes[grid.mesh_index].triangle_indices.start_index; t < meshes[grid.mesh_index].triangle_indices.end_index; t++)
         {
-            int t0_index = triangles[t].indices[0];
-            int t1_index = triangles[t].indices[1];
-            int t2_index = triangles[t].indices[2];
+            int t0_index = triangles[t].vertex_indices[0];
+            int t1_index = triangles[t].vertex_indices[1];
+            int t2_index = triangles[t].vertex_indices[2];
 
             glm::vec3 triangle[3];
-            triangle[0] = vertex_data_pool[t0_index].vertex;
-            triangle[1] = vertex_data_pool[t1_index].vertex;
-            triangle[2] = vertex_data_pool[t2_index].vertex;
+            triangle[0] = vertices[t0_index].position;
+            triangle[1] = vertices[t1_index].position;
+            triangle[2] = vertices[t2_index].position;
 
-            Voxel3D min, max;
+            Voxel3DIndex min, max;
 
-            getVoxelIndex(  min, max,
-                            meshes[grid.mesh_index].bounding_box,
-                            x_voxel_width, y_voxel_width, z_voxel_width,
-                            triangle);
+            computeVoxelIndex(min, max, meshes[grid.mesh_index].bounding_box, grid.voxel_width, triangle);
 
             for (int z = min.z; z <= max.z; z++)
             {
@@ -319,16 +312,16 @@ void Scene::generateUniformGrids()
         grid.voxelIndices.start_index = voxels.size();
         for (int i = 0; i < voxels_buffer.size(); i++)
         {
-            Range range;
-            range.start_index = per_voxel_data_pool.size();
+            IndexRange per_voxel_data_index_range;
+            per_voxel_data_index_range.start_index = per_voxel_data_pool.size();
             for (int j = 0; j < voxels_buffer[i].size(); j++)
             {
                 TriangleIndex iTriangle;
-                iTriangle.index = voxels_buffer[i][j];
+                iTriangle = voxels_buffer[i][j];
                 per_voxel_data_pool.push_back(iTriangle);
             }       
-            range.end_index = per_voxel_data_pool.size();
-            voxels.push_back(range);
+            per_voxel_data_index_range.end_index = per_voxel_data_pool.size();
+            voxels.push_back(per_voxel_data_index_range);
         }
         grid.voxelIndices.end_index = voxels.size();
 

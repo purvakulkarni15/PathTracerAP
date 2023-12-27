@@ -1,4 +1,14 @@
 #pragma once
+#define GLM_FORCE_CUDA
+#include <iostream>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include "device_launch_parameters.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <thrust/random.h>
+#include <thrust/remove.h>
+
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABS(x) ((x) < 0 ? -(x) : (x))
@@ -16,9 +26,9 @@ void printCUDAMemoryInfo()
 {
     size_t free_bytes, total_bytes;
 
-    // Get device memory information
     cudaError_t cuda_status = cudaMemGetInfo(&free_bytes, &total_bytes);
-    if (cuda_status != cudaSuccess) {
+    if (cuda_status != cudaSuccess) 
+    {
         std::cerr << "cudaMemGetInfo failed: " << cudaGetErrorString(cuda_status) << std::endl;
         return;
     }
@@ -29,7 +39,7 @@ void printCUDAMemoryInfo()
 
 }
 
-__host__ __device__
+__inline__ __host__ __device__
 glm::vec3 calculateRandomDirectionInHemisphere(glm::vec3 normal, thrust::default_random_engine& rng)
 {
     thrust::uniform_real_distribution<float> u01(0, 1);
@@ -63,7 +73,7 @@ glm::vec3 calculateRandomDirectionInHemisphere(glm::vec3 normal, thrust::default
         + sin(around) * over * perpendicularDirection2;
 }
 
-__host__ __device__ 
+__inline__ __host__ __device__
 inline unsigned int utilHash(unsigned int a)
 {
     a = (a + 0x7ed55d16) + (a << 12);
@@ -75,18 +85,37 @@ inline unsigned int utilHash(unsigned int a)
     return a;
 }
 
-__host__ __device__
+__inline__ __host__ __device__
 thrust::default_random_engine makeSeededRandomEngine(int iter, int index, int depth)
 {
     int h = utilHash((1 << 31) | (depth << 22) | iter) ^ utilHash(index);
     return thrust::default_random_engine(h);
 }
 
-__host__ __device__ glm::vec3 reflectRay(const glm::vec3& incident_direction, const glm::vec3& normal_vector)
+__inline__ __host__ __device__ glm::vec3 reflectRay(const glm::vec3& incident_direction, const glm::vec3& normal_vector)
 {
     glm::vec3 normalized_incident = glm::normalize(incident_direction);
     glm::vec3 normalized_normal = glm::normalize(normal_vector);
 
     glm::vec3 reflected_direction = normalized_incident - 2.0f * glm::dot(normalized_incident, normalized_normal) * normalized_normal;
     return reflected_direction;
+}
+
+__inline__ __host__ __device__ glm::vec3 transformDirection(glm::vec3& direction, const glm::mat4& matrix)
+{
+    return glm::vec3(matrix * glm::vec4(direction, 0.0f));
+}
+
+
+__inline__ __host__ __device__ glm::vec3 transformPosition(const glm::vec3& position, const glm::mat4& matrix)
+{
+    return glm::vec3(matrix * glm::vec4(position, 1.0f));
+}
+
+__inline__ __host__ __device__ glm::vec3 transformNormal(glm::vec3& normal, const glm::mat4& matrix)
+{
+    glm::mat3 upperLeftMatrix = glm::mat3(matrix);
+    glm::mat3 inverseTranspose = glm::transpose(glm::inverse(upperLeftMatrix));
+
+    return inverseTranspose * normal;
 }

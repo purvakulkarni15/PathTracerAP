@@ -11,8 +11,8 @@ template <typename T>
 class GPUMemoryPool
 {
 public:
-	static GPUMemoryPool* instance;
-	static GPUMemoryPool* getInstance()
+	GPUMemoryPool() :size(0), pool(nullptr),instance(nullptr) {};
+	GPUMemoryPool* getInstance()
 	{
 		if (instance == nullptr)
 		{
@@ -22,7 +22,7 @@ public:
 	}
 	void allocate(const vector<T>& data)
 	{
-		if (instance)
+		//if (instance)
 		{
 			size = data.size();
 			cudaError_t err = cudaMallocManaged(&pool, sizeof(T)*size);
@@ -41,8 +41,9 @@ public:
 	T* pool;
 
 private:
-	GPUMemoryPool() :size(0), pool(nullptr) {};
+	//GPUMemoryPool() :size(0), pool(nullptr) {};
+	GPUMemoryPool* instance;
 };
 
-template <typename T>
-GPUMemoryPool<T>* GPUMemoryPool<T>::instance = nullptr;
+//template <typename T>
+//GPUMemoryPool<T>* GPUMemoryPool<T>::instance = nullptr;

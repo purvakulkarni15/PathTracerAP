@@ -13,28 +13,10 @@
 #include "Primitive.h"
 
 using namespace std;
-
-struct Voxel3D 
-{
-	int x; 
-	int y;  
-	int z; 
-};
-
-struct Grid
-{
-	Range voxelIndices;
-	int mesh_index;
-};
-
-struct Model
-{
-	int grid_index;
-	int mesh_index;
-	glm::mat4 model_to_world;
-	glm::mat4 world_to_model;
-	Material mat;
-};
+using namespace Common;
+using namespace Geometry;
+using namespace SceneElements;
+using namespace SpatialAcceleration;
 
 class Scene
 {
@@ -43,14 +25,14 @@ public:
 
 	vector<Model> models;
 	vector<Mesh> meshes;
-	vector<VertexData> vertex_data_pool;
+	vector<Vertex> vertices;
 	vector<Triangle> triangles;
 	vector<Grid> grids;
-	vector<Range> voxels;
+	vector<IndexRange> voxels;
 	vector<TriangleIndex> per_voxel_data_pool;
 
 private:
-	void addMesh(string path, Mesh& mesh);
+	void loadAndProcessMeshFile(string path, Mesh& mesh);
 	void generateUniformGrids();
 	void processMesh(aiMesh* ai_mesh, Mesh& mesh, const aiScene* scene);
 	void processNode(aiNode* node, Mesh& mesh, const aiScene* scene);

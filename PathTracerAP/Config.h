@@ -14,7 +14,7 @@
 
 #define BASE_MODEL_SCALE 1000
 
-#define ITER 1
+#define ITER 10
 
 #ifdef ENABLE_VISUALIZER
 #define VISUALIZER_WIN_X 1600
