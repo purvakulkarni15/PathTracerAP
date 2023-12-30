@@ -114,8 +114,8 @@ __inline__ __host__ __device__ glm::vec3 transformPosition(const glm::vec3& posi
 
 __inline__ __host__ __device__ glm::vec3 transformNormal(glm::vec3& normal, const glm::mat4& matrix)
 {
-    glm::mat3 upperLeftMatrix = glm::mat3(matrix);
-    glm::mat3 inverseTranspose = glm::transpose(glm::inverse(upperLeftMatrix));
+    glm::mat3 upper_left_matrix = glm::mat3(matrix);
+    glm::mat3 inverse_transpose = glm::transpose(glm::inverse(upper_left_matrix));
 
-    return inverseTranspose * normal;
+    return inverse_transpose * normal;
 }

@@ -28,12 +28,12 @@ public:
 	vector<Vertex> vertices;
 	vector<Triangle> triangles;
 	vector<Grid> grids;
-	vector<IndexRange> voxels;
-	vector<TriangleIndex> per_voxel_data_pool;
+	vector<Voxel> voxels;
+	vector<EntityIndex> per_voxel_data_pool;
 
 private:
 	void loadAndProcessMeshFile(string path, Mesh& mesh);
-	void generateUniformGrids();
+	void addMeshesToGrid();
 	void processMesh(aiMesh* ai_mesh, Mesh& mesh, const aiScene* scene);
 	void processNode(aiNode* node, Mesh& mesh, const aiScene* scene);
 };

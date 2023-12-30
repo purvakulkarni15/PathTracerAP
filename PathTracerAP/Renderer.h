@@ -23,9 +23,11 @@ struct RenderData
 	GPUMemoryPool<Vertex> *dev_per_vertex_data;
 	GPUMemoryPool<Triangle> *dev_triangle_data;
 	GPUMemoryPool<Grid> *dev_grid_data;
-	GPUMemoryPool<IndexRange> *dev_voxel_data;
-	GPUMemoryPool<TriangleIndex> *dev_per_voxel_data;
+	GPUMemoryPool<Voxel> *dev_voxel_data;
+	GPUMemoryPool<EntityIndex> *dev_per_voxel_data;
 	GPUMemoryPool <Ray> *dev_ray_data;
+	GPUMemoryPool<IntersectionData>* dev_intersection_data;
+	GPUMemoryPool<IntersectionData>* dev_first_intersection_cache;
 	GPUMemoryPool <Pixel>* dev_image_data;
 	GPUMemoryPool <int>* dev_stencil;
 

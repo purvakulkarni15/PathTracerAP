@@ -155,7 +155,7 @@ Scene::Scene(string config)
     light_model4.mat.material_type = Material::MaterialType::EMISSIVE;
     models.push_back(light_model4);
 
-    generateUniformGrids();
+    addMeshesToGrid();
 }
 
 void Scene::loadAndProcessMeshFile(string path, Mesh& mesh)
@@ -250,7 +250,7 @@ void computeVoxelIndex( Voxel3DIndex& min, Voxel3DIndex& max, BoundingBox& bound
     max.z = CLAMP(max.z, 0, GRID_Z - 1);
 }
 
-void Scene::generateUniformGrids()
+void Scene::addMeshesToGrid()
 {
     vector<bool> is_mesh_processed(meshes.size(), false);
     vector<int> grid_index_cache(meshes.size());
@@ -268,20 +268,20 @@ void Scene::generateUniformGrids()
         models[i].grid_index = grids.size();
 
         Grid grid;
-        
-        grid.mesh_index = models[i].mesh_index;
+        int mesh_index = models[i].mesh_index;
+        grid.entity_type = EntityType::MODEL;
+        grid.entity_index = i;
         
         vector<vector<int>> voxels_buffer(GRID_X * GRID_Y * GRID_Z);
-
-        float x_width = meshes[grid.mesh_index].bounding_box.max.x - meshes[grid.mesh_index].bounding_box.min.x;
-        float y_width = meshes[grid.mesh_index].bounding_box.max.y - meshes[grid.mesh_index].bounding_box.min.y;
-        float z_width = meshes[grid.mesh_index].bounding_box.max.z - meshes[grid.mesh_index].bounding_box.min.z;
+        float x_width = meshes[mesh_index].bounding_box.max.x - meshes[mesh_index].bounding_box.min.x;
+        float y_width = meshes[mesh_index].bounding_box.max.y - meshes[mesh_index].bounding_box.min.y;
+        float z_width = meshes[mesh_index].bounding_box.max.z - meshes[mesh_index].bounding_box.min.z;
 
         grid.voxel_width.x = x_width / GRID_X;
         grid.voxel_width.y = y_width / GRID_Y;
         grid.voxel_width.z = z_width / GRID_Z;
 
-        for (int t = meshes[grid.mesh_index].triangle_indices.start_index; t < meshes[grid.mesh_index].triangle_indices.end_index; t++)
+        for (int t = meshes[mesh_index].triangle_indices.start_index; t < meshes[mesh_index].triangle_indices.end_index; t++)
         {
             int t0_index = triangles[t].vertex_indices[0];
             int t1_index = triangles[t].vertex_indices[1];
@@ -294,7 +294,7 @@ void Scene::generateUniformGrids()
 
             Voxel3DIndex min, max;
 
-            computeVoxelIndex(min, max, meshes[grid.mesh_index].bounding_box, grid.voxel_width, triangle);
+            computeVoxelIndex(min, max, meshes[mesh_index].bounding_box, grid.voxel_width, triangle);
 
             for (int z = min.z; z <= max.z; z++)
             {
@@ -312,16 +312,17 @@ void Scene::generateUniformGrids()
         grid.voxelIndices.start_index = voxels.size();
         for (int i = 0; i < voxels_buffer.size(); i++)
         {
-            IndexRange per_voxel_data_index_range;
-            per_voxel_data_index_range.start_index = per_voxel_data_pool.size();
+            Voxel ivoxel;
+            ivoxel.entity_type = EntityType::TRIANGLE;
+            ivoxel.entity_index_range.start_index = per_voxel_data_pool.size();
             for (int j = 0; j < voxels_buffer[i].size(); j++)
             {
-                TriangleIndex iTriangle;
+                EntityIndex iTriangle;
                 iTriangle = voxels_buffer[i][j];
                 per_voxel_data_pool.push_back(iTriangle);
             }       
-            per_voxel_data_index_range.end_index = per_voxel_data_pool.size();
-            voxels.push_back(per_voxel_data_index_range);
+            ivoxel.entity_index_range.end_index = per_voxel_data_pool.size();
+            voxels.push_back(ivoxel);
         }
         grid.voxelIndices.end_index = voxels.size();
 

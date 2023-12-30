@@ -9,7 +9,7 @@
 
 namespace Common
 {
-	typedef int TriangleIndex;
+	typedef int EntityIndex;
 
 	struct IndexRange
 	{
@@ -104,11 +104,24 @@ namespace SpatialAcceleration
 {
 	using namespace Common;
 
+	enum EntityType {
+		MODEL,
+		SCENE,
+		TRIANGLE,
+		SPHERE
+	};
+
 	struct Voxel3DIndex
 	{
 		int x;
 		int y;
 		int z;
+	};
+
+	struct Voxel
+	{
+		IndexRange entity_index_range;
+		EntityType entity_type;
 	};
 
 	struct Grid
@@ -118,7 +131,9 @@ namespace SpatialAcceleration
 		{
 			float x, y, z;
 		}voxel_width;
-		int mesh_index;
+
+		EntityType entity_type;
+		int entity_index;
 	};
 }
 
@@ -130,20 +145,25 @@ namespace Camera
 		glm::vec3 color;
 	};
 
+	struct IntersectionData
+	{
+		float impact_distance;
+		glm::vec3 impact_normal;
+		Material impact_mat;
+	};
+
 	struct Ray
 	{
 		struct Points
 		{
 			glm::vec3 orig;
 			glm::vec3 dir;
-		} points_base, points_transformed;
+		} base, transformed;
 
-		struct HitInfo
+		struct Cache
 		{
-			float impact_distance;
-			glm::vec3 impact_normal;
-			Material impact_mat;
-		} hit_info;
+			glm::vec3 inv_dir;
+		}cache;
 
 		struct MetaData
 		{
