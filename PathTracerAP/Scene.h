@@ -11,6 +11,7 @@
 #include <assimp/postprocess.h> 
 
 #include "Primitive.h"
+#include "RenderData.h"
 
 using namespace std;
 using namespace Common;
@@ -27,14 +28,16 @@ public:
 	vector<Mesh> meshes;
 	vector<Vertex> vertices;
 	vector<Triangle> triangles;
-	vector<Grid> grids;
+	Grid grid;
 	vector<Voxel> voxels;
 	vector<EntityIndex> per_voxel_data_pool;
 
 private:
 	void loadAndProcessMeshFile(string path, Mesh& mesh);
-	void addMeshesToGrid();
 	void processMesh(aiMesh* ai_mesh, Mesh& mesh, const aiScene* scene);
 	void processNode(aiNode* node, Mesh& mesh, const aiScene* scene);
+	void addSceneDataToDevice();
+	void transformSceneData();
+	void addMeshesToGrid();
 };
 

@@ -16,33 +16,6 @@ using namespace Camera;
 using namespace SceneElements;
 using namespace SpatialAcceleration;
 
-struct RenderData
-{
-	GPUMemoryPool<Model> *dev_model_data;
-	GPUMemoryPool<Mesh> *dev_mesh_data;
-	GPUMemoryPool<Vertex> *dev_per_vertex_data;
-	GPUMemoryPool<Triangle> *dev_triangle_data;
-	GPUMemoryPool<Grid> *dev_grid_data;
-	GPUMemoryPool<Voxel> *dev_voxel_data;
-	GPUMemoryPool<EntityIndex> *dev_per_voxel_data;
-	GPUMemoryPool <Ray> *dev_ray_data;
-	GPUMemoryPool<IntersectionData>* dev_intersection_data;
-	GPUMemoryPool<IntersectionData>* dev_first_intersection_cache;
-	GPUMemoryPool <Pixel>* dev_image_data;
-	GPUMemoryPool <int>* dev_stencil;
-	GPUMemoryPool<int>* dev_stencil_bounding_box_intersection;
-	GPUMemoryPool<float>* dev_dist_bounding_box;
-
-#ifdef ENABLE_VISUALIZER
-	struct VisualizerData
-	{
-		vector<Model> models;
-		vector<int> rays;
-		vector<vector<int>> hit_voxels_per_ray;
-	}visualizer_data;
-#endif
-};
-
 class Renderer
 {
 public:

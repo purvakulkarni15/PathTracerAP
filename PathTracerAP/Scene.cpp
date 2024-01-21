@@ -1,8 +1,10 @@
 #include "Scene.h"
+
+#include "HelperKernels.cuh"
+
 #define CLAMP(value, min, max) ((value) < (min) ? (min) : ((value) > (max) ? (max) : (value)))
 Scene::Scene(string config)
 {
-
     Mesh box;
     loadAndProcessMeshFile("Input data\\enclosing_box.obj", box);
     meshes.push_back(box);
@@ -290,6 +292,48 @@ void Scene::processMesh(aiMesh* ai_mesh, Mesh& mesh, const aiScene* scene)
     mesh.triangle_indices.end_index = triangles.size();
 }
 
+void Scene::addSceneDataToDevice()
+{
+    RenderData::allocateModels(models);
+    RenderData::allocateMeshes(meshes);
+    RenderData::allocateVertices(vertices);
+    RenderData::allocateTriangles(triangles);
+}
+
+void Scene::transformSceneData()
+{
+    grid.bounding_box.min = glm::vec3(FLOAT_MAX, FLOAT_MAX, FLOAT_MAX);
+    grid.bounding_box.max = glm::vec3(FLOAT_MIN, FLOAT_MIN, FLOAT_MIN);
+
+    for (int i = 0; i < models.size(); i++)
+    {
+        transformModelLauncher(&RenderData::dev_models->pool[i], RenderData::dev_meshes, RenderData::dev_vertices);
+        Model* model = &RenderData::dev_models->pool[i];
+        Mesh* mesh = &RenderData::dev_meshes->pool[model->mesh_index];
+        
+        BoundingBox curr_model_bb;
+        glm::vec3 min = transformPosition(mesh->bounding_box.min, model->model_to_world);
+        glm::vec3 max= transformPosition(mesh->bounding_box.max, model->model_to_world);
+
+        curr_model_bb.min.x = MIN(min.x, max.x);
+        curr_model_bb.min.y = MIN(min.y, max.y);
+        curr_model_bb.min.z = MIN(min.z, max.z);
+
+        curr_model_bb.max.x = MAX(min.x, max.x);
+        curr_model_bb.max.y = MAX(min.y, max.y);
+        curr_model_bb.max.z = MAX(min.z, max.z);
+        
+        grid.bounding_box.min.x = MIN(grid.bounding_box.min.x, curr_model_bb.min.x);
+        grid.bounding_box.min.y = MIN(grid.bounding_box.min.y, curr_model_bb.min.y);
+        grid.bounding_box.min.z = MIN(grid.bounding_box.min.z, curr_model_bb.min.z);
+
+        grid.bounding_box.max.x = MAX(grid.bounding_box.max.x, curr_model_bb.max.x);
+        grid.bounding_box.max.y = MAX(grid.bounding_box.max.y, curr_model_bb.max.y);
+        grid.bounding_box.max.z = MAX(grid.bounding_box.max.z, curr_model_bb.max.z);
+    }
+}
+
+
 void computeVoxelIndex( Voxel3DIndex& min, Voxel3DIndex& max, BoundingBox& bounding_box, const Grid::VoxelWidth &voxel_width, const glm::vec3* triangle)
 {
     BoundingBox t_box;
@@ -317,26 +361,12 @@ void computeVoxelIndex( Voxel3DIndex& min, Voxel3DIndex& max, BoundingBox& bound
 
 void Scene::addMeshesToGrid()
 {
-    vector<bool> is_mesh_processed(meshes.size(), false);
-    vector<int> grid_index_cache(meshes.size());
+    Grid grid;
 
     for (int i = 0; i < models.size(); i++)
     {
-        if (is_mesh_processed[models[i].mesh_index])
-        {
-            models[i].grid_index = grid_index_cache[models[i].mesh_index];
-            continue;
-        }
-
-        is_mesh_processed[models[i].mesh_index] = true;
-        grid_index_cache[models[i].mesh_index] = grids.size();
-        models[i].grid_index = grids.size();
-
-        Grid grid;
         int mesh_index = models[i].mesh_index;
-        grid.entity_type = EntityType::MODEL;
-        grid.entity_index = i;
-        
+
         vector<vector<int>> voxels_buffer(GRID_X * GRID_Y * GRID_Z);
         float x_width = meshes[mesh_index].bounding_box.max.x - meshes[mesh_index].bounding_box.min.x;
         float y_width = meshes[mesh_index].bounding_box.max.y - meshes[mesh_index].bounding_box.min.y;

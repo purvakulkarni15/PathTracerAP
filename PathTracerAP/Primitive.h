@@ -30,6 +30,7 @@ namespace Geometry
 	struct Triangle
 	{
 		int vertex_indices[3];
+		int model_id;
 	};
 
 	struct BoundingBox
@@ -93,7 +94,6 @@ namespace SceneElements
 
 	struct Model
 	{
-		int grid_index;
 		int mesh_index;
 		glm::mat4 model_to_world;
 		glm::mat4 world_to_model;
@@ -129,13 +129,11 @@ namespace SpatialAcceleration
 	struct Grid
 	{
 		IndexRange voxelIndices;
+		BoundingBox bounding_box;
 		struct VoxelWidth
 		{
 			float x, y, z;
 		}voxel_width;
-
-		EntityType entity_type;
-		int entity_index;
 	};
 }
 
