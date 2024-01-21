@@ -30,6 +30,8 @@ struct RenderData
 	GPUMemoryPool<IntersectionData>* dev_first_intersection_cache;
 	GPUMemoryPool <Pixel>* dev_image_data;
 	GPUMemoryPool <int>* dev_stencil;
+	GPUMemoryPool<int>* dev_stencil_bounding_box_intersection;
+	GPUMemoryPool<float>* dev_dist_bounding_box;
 
 #ifdef ENABLE_VISUALIZER
 	struct VisualizerData

@@ -159,6 +159,7 @@
     <ClCompile Include="Scene.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Experimentation.h" />
     <ClInclude Include="utility.h" />
     <CudaCompile Include="GPUMemoryPool.h" />
     <ClInclude Include="Config.h" />

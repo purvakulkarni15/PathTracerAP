@@ -73,7 +73,9 @@ namespace SceneElements
 			SPECULAR,
 			REFLECTIVE,
 			REFRACTIVE,
-			EMISSIVE
+			EMISSIVE,
+			COAT,
+			METAL
 		} material_type;
 
 		float refractive_index;
@@ -150,6 +152,7 @@ namespace Camera
 		float impact_distance;
 		glm::vec3 impact_normal;
 		Material impact_mat;
+		int ipixel;
 	};
 
 	struct Ray

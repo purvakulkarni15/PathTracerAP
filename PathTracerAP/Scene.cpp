@@ -3,85 +3,126 @@
 Scene::Scene(string config)
 {
 
-    Mesh bunny_mesh;
-    loadAndProcessMeshFile("Input data\\stanford_bunny.obj", bunny_mesh);
-    meshes.push_back(bunny_mesh);
-
-    Mesh armadillo_mesh;
-    loadAndProcessMeshFile("Input data\\stanford_armadillo.obj", armadillo_mesh);
-    meshes.push_back(armadillo_mesh);
-
     Mesh box;
     loadAndProcessMeshFile("Input data\\enclosing_box.obj", box);
     meshes.push_back(box);
-
-    Mesh dragon_mesh;
-    loadAndProcessMeshFile("Input data\\stanford_dinosaur.obj", dragon_mesh);
-    meshes.push_back(dragon_mesh);
 
     Mesh ceiling_light;
     loadAndProcessMeshFile("Input data\\ceiling_light.obj", ceiling_light);
     meshes.push_back(ceiling_light);
 
+    Mesh monkey_mesh;
+    loadAndProcessMeshFile("Input data\\blender_monkey.obj", monkey_mesh);
+    meshes.push_back(monkey_mesh);
+
+    Mesh bunny_mesh;
+    loadAndProcessMeshFile("Input data\\stanford_bunny.obj", bunny_mesh);
+    //meshes.push_back(bunny_mesh);
+
+    Mesh armadillo_mesh;
+    loadAndProcessMeshFile("Input data\\stanford_armadillo.obj", armadillo_mesh);
+    //meshes.push_back(armadillo_mesh);
+
+    Mesh dragon_mesh;
+    loadAndProcessMeshFile("Input data\\stanford_dinosaur.obj", dragon_mesh);
+    //meshes.push_back(dragon_mesh);
+
     glm::mat4 scale_matrix, rotate_matrix, translation_matrix;
+
+    Model monkey_model;
+
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.08f, 0.08f, 0.08f));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-50.0f, -25.0f, 150.0f));
+    monkey_model.mesh_index = 2;
+    monkey_model.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
+    monkey_model.world_to_model = glm::inverse(monkey_model.model_to_world);
+    monkey_model.mat.color = glm::vec3(0.001f, 0.99f, 0.2f);
+    monkey_model.mat.material_type = Material::MaterialType::METAL;
+    models.push_back(monkey_model);
+
+    Model monkey_model_2;
+
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(-40.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(75.0f, 100.0f, 0.0f));
+    monkey_model_2.mesh_index = 2;
+    monkey_model_2.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
+    monkey_model_2.world_to_model = glm::inverse(monkey_model_2.model_to_world);
+    monkey_model_2.mat.color = glm::vec3(0.99f, 0.99f, 0.001f);
+    monkey_model_2.mat.material_type = Material::MaterialType::COAT;
+    models.push_back(monkey_model_2);
+
+    Model monkey_model_3;
+
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(325.0f, 45.0f, 0.0f));
+    monkey_model_3.mesh_index = 2;
+    monkey_model_3.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
+    monkey_model_3.world_to_model = glm::inverse(monkey_model_3.model_to_world);
+    monkey_model_3.mat.color = glm::vec3(0.99f, 0.99f, 0.75f);
+    monkey_model_3.mat.material_type = Material::MaterialType::REFLECTIVE;
+    models.push_back(monkey_model_3);
 
     Model bunny_model;
 
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.08f, 0.08f, 0.08f));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-300.0f, -120.0f, 200.0f));
-    bunny_model.mesh_index = 0;
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-50.0f, -125.0f, 150.0f));
+    bunny_model.mesh_index = 3;
     bunny_model.model_to_world = translation_matrix *rotate_matrix* scale_matrix;
     bunny_model.world_to_model = glm::inverse(bunny_model.model_to_world);
     bunny_model.mat.color = glm::vec3(0.001f, 0.99f, 0.2f);
-    bunny_model.mat.material_type = Material::MaterialType::DIFFUSE;
-    models.push_back(bunny_model);
+    bunny_model.mat.material_type = Material::MaterialType::METAL;
+    //models.push_back(bunny_model);
 
     Model bunny_model_2;
-    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.08f, 0.08f, 0.08f));
-    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-125.0f, -120.0f, 250.0f));
-    bunny_model_2.mesh_index = 0;
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(60.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(75.0f, -35.0f, 0.0f));
+    bunny_model_2.mesh_index = 3;
     bunny_model_2.model_to_world = translation_matrix *rotate_matrix* scale_matrix;
     bunny_model_2.world_to_model = glm::inverse(bunny_model_2.model_to_world);
     bunny_model_2.mat.color = glm::vec3(0.99f, 0.99f, 0.001f);
-    bunny_model_2.mat.material_type = Material::MaterialType::DIFFUSE;
-    models.push_back(bunny_model_2);
+    bunny_model_2.mat.material_type = Material::MaterialType::COAT;
+    //models.push_back(bunny_model_2);
 
     Model bunny_model_3;
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(25.0f, -75.0f, 0.0f));
-    bunny_model_3.mesh_index = 0;
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(325.0f, -75.0f, 0.0f));
+    bunny_model_3.mesh_index = 3;
     bunny_model_3.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
     bunny_model_3.world_to_model = glm::inverse(bunny_model_3.model_to_world);
     bunny_model_3.mat.color = glm::vec3(0.99f, 0.99f, 0.75f);
     bunny_model_3.mat.material_type = Material::MaterialType::REFLECTIVE;
-    models.push_back(bunny_model_3);
+    //models.push_back(bunny_model_3);
 
     Model armadillo_model;
 
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(225.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-250.0f, 5.0f, 0.0f));
-    armadillo_model.mesh_index = 1;
+    armadillo_model.mesh_index = 4;
     armadillo_model.model_to_world = translation_matrix *rotate_matrix* scale_matrix;
     armadillo_model.world_to_model = glm::inverse(armadillo_model.model_to_world);
     armadillo_model.mat.color = glm::vec3(0.001f, 0.001f, 0.99f);
-    armadillo_model.mat.material_type = Material::MaterialType::DIFFUSE;
-    models.push_back(armadillo_model);
+    armadillo_model.mat.material_type = Material::MaterialType::COAT;
+    //models.push_back(armadillo_model);
 
     Model box_model;
 
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(25.0f, -120.0f, 0.0f));
-    box_model.mesh_index = 2;
+    box_model.mesh_index = 0;
     box_model.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
     box_model.world_to_model = glm::inverse(box_model.model_to_world);
     box_model.mat.color = glm::vec3(0.99f, 0.99f, 0.99f);
     box_model.mat.material_type = Material::MaterialType::DIFFUSE;
     models.push_back(box_model);
+
 
     Model dragon_model;
 
@@ -92,27 +133,51 @@ Scene::Scene(string config)
     dragon_model.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
     dragon_model.world_to_model = glm::inverse(dragon_model.model_to_world);
     dragon_model.mat.color = glm::vec3(0.001f, 0.5f, 0.99f);
-    dragon_model.mat.material_type = Material::MaterialType::REFLECTIVE;
-    models.push_back(dragon_model);
+    dragon_model.mat.material_type = Material::MaterialType::METAL;
+    //models.push_back(dragon_model);
 
     Model stand_model;
 
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -120.0f, 0.0f));
-    stand_model.mesh_index = 4;
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(325.0f, -120.0f, 0.0f));
+    stand_model.mesh_index = 1;
     stand_model.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
     stand_model.world_to_model = glm::inverse(stand_model.model_to_world);
     stand_model.mat.color = glm::vec3(0.99f, 0.50f, 0.60f);
     stand_model.mat.material_type = Material::MaterialType::DIFFUSE;
     models.push_back(stand_model);
 
+    Model stand_model2;
+
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-225.0f, 8.0f, 0.0f));
+    stand_model2.mesh_index = 1;
+    stand_model2.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
+    stand_model2.world_to_model = glm::inverse(stand_model2.model_to_world);
+    stand_model2.mat.color = glm::vec3(0.40f, 0.10f, 0.99f);
+    stand_model2.mat.material_type = Material::MaterialType::COAT;
+    models.push_back(stand_model2);
+
+    Model stand_model3;
+
+    scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
+    rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(75.0f, -90.0f, 0.0f));
+    stand_model3.mesh_index = 1;
+    stand_model3.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
+    stand_model3.world_to_model = glm::inverse(stand_model3.model_to_world);
+    stand_model3.mat.color = glm::vec3(0.99f, 0.05f, 0.10f);
+    stand_model3.mat.material_type = Material::MaterialType::METAL;
+    models.push_back(stand_model3);
+
     Model light_model;
 
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.2, 0.1, 0.2));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 750.0f, -100.0f));
-    light_model.mesh_index = 4;
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 850.0f, -100.0f));
+    light_model.mesh_index = 1;
     light_model.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
     light_model.world_to_model = glm::inverse(light_model.model_to_world);
     light_model.mat.color = glm::vec3(0.99f, 0.99f, 0.99f);
@@ -123,8 +188,8 @@ Scene::Scene(string config)
 
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.2, 0.2, 0.1));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 375.0f, -560.0f));
-    light_model2.mesh_index = 4;
+    translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 375.0f, 950.0f));
+    light_model2.mesh_index = 1;
     light_model2.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
     light_model2.world_to_model = glm::inverse(light_model2.model_to_world);
     light_model2.mat.color = glm::vec3(0.99f, 0.99f, 0.99f);
@@ -136,7 +201,7 @@ Scene::Scene(string config)
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.2, 0.2));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-520.0f, 375.0f, 0.0f));
-    light_model3.mesh_index = 4;
+    light_model3.mesh_index = 1;
     light_model3.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
     light_model3.world_to_model = glm::inverse(light_model3.model_to_world);
     light_model3.mat.color = glm::vec3(0.99f, 0.99f, 0.99f);
@@ -148,7 +213,7 @@ Scene::Scene(string config)
     scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.2, 0.2));
     rotate_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     translation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(550.0f, 375.0f, 0.0f));
-    light_model4.mesh_index = 4;
+    light_model4.mesh_index = 1;
     light_model4.model_to_world = translation_matrix * rotate_matrix * scale_matrix;
     light_model4.world_to_model = glm::inverse(light_model4.model_to_world);
     light_model4.mat.color = glm::vec3(0.99f, 0.99f, 0.99f);
@@ -203,7 +268,7 @@ void Scene::processMesh(aiMesh* ai_mesh, Mesh& mesh, const aiScene* scene)
     {
         Vertex vertex_data_obj;
         vertex_data_obj.position = convertFromVector3D(ai_mesh->mVertices[i]);
-        //vertex_data_obj.normal = getFromVector3D(ai_mesh->mNormals[i]);
+        vertex_data_obj.normal = convertFromVector3D(ai_mesh->mNormals[i]);
         vertices.push_back(vertex_data_obj);
         mesh.bounding_box.update(vertex_data_obj.position);
     }
@@ -312,17 +377,17 @@ void Scene::addMeshesToGrid()
         grid.voxelIndices.start_index = voxels.size();
         for (int i = 0; i < voxels_buffer.size(); i++)
         {
-            Voxel ivoxel;
-            ivoxel.entity_type = EntityType::TRIANGLE;
-            ivoxel.entity_index_range.start_index = per_voxel_data_pool.size();
+            Voxel voxel;
+            voxel.entity_type = EntityType::TRIANGLE;
+            voxel.entity_index_range.start_index = per_voxel_data_pool.size();
             for (int j = 0; j < voxels_buffer[i].size(); j++)
             {
                 EntityIndex iTriangle;
                 iTriangle = voxels_buffer[i][j];
                 per_voxel_data_pool.push_back(iTriangle);
             }       
-            ivoxel.entity_index_range.end_index = per_voxel_data_pool.size();
-            voxels.push_back(ivoxel);
+            voxel.entity_index_range.end_index = per_voxel_data_pool.size();
+            voxels.push_back(voxel);
         }
         grid.voxelIndices.end_index = voxels.size();
 
